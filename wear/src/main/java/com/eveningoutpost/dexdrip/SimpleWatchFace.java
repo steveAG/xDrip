@@ -1,0 +1,203 @@
+package com.eveningoutpost.dexdrip;
+
+import android.content.Intent;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Rect;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.SurfaceHolder;
+import android.view.View;
+import android.widget.LinearLayout;
+
+import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
+import androidx.wear.watchface.ComplicationSlotsManager;
+import androidx.wear.watchface.WatchFace;
+import androidx.wear.watchface.WatchFaceType;
+import androidx.wear.watchface.WatchState;
+import androidx.wear.watchface.style.CurrentUserStyleRepository;
+
+import com.eveningoutpost.dexdrip.models.JoH;
+import com.ustwo.clockwise.common.WatchMode;
+
+import static com.eveningoutpost.dexdrip.BaseWatchFace.TAP_TYPE_TAP;
+import static com.eveningoutpost.dexdrip.BaseWatchFace.TAP_TYPE_TOUCH;
+
+/**
+ * Simple watch face implementation for xDrip+
+ */
+public class SimpleWatchFace extends BaseWatchFace {
+    private static final String TAG = "SimpleWatchFace";
+    private long fontsizeTapTime = 0;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+        layoutView = inflater.inflate(R.layout.activity_home, null);
+        performViewSetup();
+    }
+
+    // No @Override - this is not overriding a method from the superclass
+    protected void onTapCommand(int tapType, int x, int y, long eventTime) {
+        if (tapType == TAP_TYPE_TAP && linearLayout(mDirectionDelta, x, y)) {
+            if (eventTime - fontsizeTapTime < 800) {
+                setSmallFontsize(true);
+            }
+            fontsizeTapTime = eventTime;
+        }
+        
+        if (sharedPrefs.getBoolean("show_toasts", true)) {
+            if (tapType == TAP_TYPE_TOUCH && linearLayout(mLinearLayout, x, y)) {
+                JoH.static_toast_short(mStatusLine);
+            }
+            if (tapType == TAP_TYPE_TOUCH && linearLayout(mStepsLinearLayout, x, y)) {
+                if (sharedPrefs.getBoolean("showSteps", false) && mStepsCount > 0) {
+                    JoH.static_toast_long(mStepsToast);
+                }
+            }
+            if (tapType == TAP_TYPE_TOUCH && linearLayout(mDirectionDelta, x, y)) {
+                if (sharedPrefs.getBoolean("extra_status_line", false) && mExtraStatusLine != null && !mExtraStatusLine.isEmpty()) {
+                    JoH.static_toast_long(mExtraStatusLine);
+                }
+            }
+        }
+        
+        if (tapType == TAP_TYPE_TOUCH && linearLayout(mMenuLinearLayout, x, y)) {
+            Intent intent = new Intent(getApplicationContext(), MenuActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            getApplicationContext().startActivity(intent);
+        }
+    }
+
+    private boolean linearLayout(LinearLayout layout, int x, int y) {
+        if (layout != null && x >= layout.getLeft() && x <= layout.getRight() &&
+                y >= layout.getTop() && y <= layout.getBottom()) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    protected androidx.wear.watchface.WatchFace createWatchFace(
+            @NonNull SurfaceHolder surfaceHolder,
+            @NonNull WatchState watchState,
+            @NonNull ComplicationSlotsManager complicationSlotsManager,
+            @NonNull CurrentUserStyleRepository currentUserStyleRepository,
+            @NonNull kotlin.coroutines.Continuation<? super androidx.wear.watchface.WatchFace> continuation) {
+        
+        Log.e(TAG, "createWatchFace called for SimpleWatchFace - DIAGNOSTIC LOG");
+        logWatchFaceRegistration("SimpleWatchFace");
+        
+        // For compatibility with the available API version, we'll use a simpler approach
+        // that doesn't try to create a WatchFace instance directly
+        
+        // Just return null as this is just a placeholder
+        // The actual watch face implementation will be handled by the modernWear flavor
+        return null;
+    }
+
+    @Override
+    protected void setColorDark() {
+        mLinearLayout.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_mLinearLayout));
+        mTime.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_mTime));
+        mDate.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_mTime));
+        mRelativeLayout.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_background));
+        
+        if (sgvLevel == 1) {
+            mSgv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_highColor));
+            mDelta.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_highColor));
+            mDirection.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_highColor));
+        } else if (sgvLevel == 0) {
+            mSgv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_midColor));
+            mDelta.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_midColor));
+            mDirection.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_midColor));
+        } else if (sgvLevel == -1) {
+            mSgv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_lowColor));
+            mDelta.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_lowColor));
+            mDirection.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_lowColor));
+        }
+
+        if (ageLevel == 1) {
+            mTimestamp.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_mTimestamp1_home));
+        } else {
+            mTimestamp.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_TimestampOld));
+        }
+
+        if (batteryLevel == 1) {
+            mUploaderBattery.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_uploaderBattery));
+        } else {
+            mUploaderBattery.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_uploaderBatteryEmpty));
+        }
+        
+        if (mXBatteryLevel == 1) {
+            mUploaderXBattery.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_uploaderBattery));
+        } else {
+            mUploaderXBattery.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_uploaderBatteryEmpty));
+        }
+
+        mStatus.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_mStatus_home));
+    }
+
+    @Override
+    protected void setColorBright() {
+        if (getCurrentWatchMode() == WatchMode.INTERACTIVE) {
+            mLinearLayout.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.light_stripe_background));
+            mRelativeLayout.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.light_background));
+            
+            if (sgvLevel == 1) {
+                mSgv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.light_highColor));
+                mDelta.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.light_highColor));
+                mDirection.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.light_highColor));
+            } else if (sgvLevel == 0) {
+                mSgv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.light_midColor));
+                mDelta.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.light_midColor));
+                mDirection.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.light_midColor));
+            } else if (sgvLevel == -1) {
+                mSgv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.light_lowColor));
+                mDelta.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.light_lowColor));
+                mDirection.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.light_lowColor));
+            }
+
+            if (ageLevel == 1) {
+                mTimestamp.setTextColor(Color.WHITE);
+            } else {
+                mTimestamp.setTextColor(Color.RED);
+            }
+
+            if (batteryLevel == 1) {
+                mUploaderBattery.setTextColor(Color.WHITE);
+            } else {
+                mUploaderBattery.setTextColor(Color.RED);
+            }
+            
+            if (mXBatteryLevel == 1) {
+                mUploaderXBattery.setTextColor(Color.WHITE);
+            } else {
+                mUploaderXBattery.setTextColor(Color.RED);
+            }
+
+            mStatus.setTextColor(Color.WHITE);
+            mTime.setTextColor(Color.BLACK);
+            mDate.setTextColor(Color.BLACK);
+        } else {
+            setColorDark();
+        }
+    }
+
+    @Override
+    protected void setColorLowRes() {
+        mLinearLayout.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_mLinearLayout));
+        mTime.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_mTime));
+        mDate.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_mTime));
+        mRelativeLayout.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_background));
+        mSgv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_midColor));
+        mDelta.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_midColor));
+        mDirection.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_midColor));
+        mTimestamp.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_mTimestamp1_home));
+        mUploaderBattery.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_uploaderBattery));
+        mUploaderXBattery.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_uploaderBattery));
+        mStatus.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.dark_mStatus_home));
+    }
+}

@@ -804,28 +804,49 @@ public class BgReading extends Model implements ShareUploadableBg {
     }
 
     public static BgReading last(boolean is_follower) {
-        if (is_follower) {
-            return new Select()
-                    .from(BgReading.class)
-                    .where("calculated_value != 0")
-                    .where("raw_data != 0")
-              //      .where("timestamp <= ?", JoH.tsl())
-                    .orderBy("timestamp desc")
-                    .executeSingle();
-        } else {
-            Sensor sensor = Sensor.currentSensor();
-            if (sensor != null) {
-                return new Select()
+        android.util.Log.e("BgReading", "DEBUG: last() called with is_follower=" + is_follower);
+        BgReading result = null;
+        
+        try {
+            if (is_follower) {
+                android.util.Log.e("BgReading", "DEBUG: last() using follower query");
+                result = new Select()
                         .from(BgReading.class)
-                        .where("Sensor = ? ", sensor.getId())
                         .where("calculated_value != 0")
                         .where("raw_data != 0")
-                //        .where("timestamp <= ?", JoH.tsl())
+                  //      .where("timestamp <= ?", JoH.tsl())
                         .orderBy("timestamp desc")
                         .executeSingle();
+            } else {
+                Sensor sensor = Sensor.currentSensor();
+                android.util.Log.e("BgReading", "DEBUG: last() current sensor: " + (sensor != null ? sensor.uuid : "null"));
+                
+                if (sensor != null) {
+                    android.util.Log.e("BgReading", "DEBUG: last() using sensor query with sensor ID: " + sensor.getId());
+                    result = new Select()
+                            .from(BgReading.class)
+                            .where("Sensor = ? ", sensor.getId())
+                            .where("calculated_value != 0")
+                            .where("raw_data != 0")
+                    //        .where("timestamp <= ?", JoH.tsl())
+                            .orderBy("timestamp desc")
+                            .executeSingle();
+                } else {
+                    android.util.Log.e("BgReading", "DEBUG: last() no sensor found, trying lastNoSenssor()");
+                    // Try without sensor constraint as fallback
+                    result = lastNoSenssor();
+                }
             }
+        } catch (Exception e) {
+            android.util.Log.e("BgReading", "DEBUG: Exception in last(): " + e.getMessage(), e);
         }
-        return null;
+        
+        android.util.Log.e("BgReading", "DEBUG: last() returning: " +
+            (result != null ? "value=" + result.calculated_value +
+            ", time=" + com.eveningoutpost.dexdrip.models.JoH.dateTimeText(result.timestamp) +
+            ", uuid=" + result.uuid : "null"));
+            
+        return result;
     }
 
     public static List<BgReading> latest_by_size(int number) {
@@ -841,13 +862,25 @@ public class BgReading extends Model implements ShareUploadableBg {
     }
 
     public static BgReading lastNoSenssor() {
-        return new Select()
-                .from(BgReading.class)
-                .where("calculated_value != 0")
-                .where("raw_data != 0")
-            //    .where("timestamp <= ?", JoH.tsl())
-                .orderBy("timestamp desc")
-                .executeSingle();
+        android.util.Log.e("BgReading", "DEBUG: lastNoSenssor() called");
+        BgReading result = null;
+        try {
+            result = new Select()
+                    .from(BgReading.class)
+                    .where("calculated_value != 0")
+                    .where("raw_data != 0")
+                //    .where("timestamp <= ?", JoH.tsl())
+                    .orderBy("timestamp desc")
+                    .executeSingle();
+            
+            android.util.Log.e("BgReading", "DEBUG: lastNoSenssor() returning: " +
+                (result != null ? "value=" + result.calculated_value +
+                ", time=" + com.eveningoutpost.dexdrip.models.JoH.dateTimeText(result.timestamp) +
+                ", uuid=" + result.uuid : "null"));
+        } catch (Exception e) {
+            android.util.Log.e("BgReading", "DEBUG: Exception in lastNoSenssor(): " + e.getMessage(), e);
+        }
+        return result;
     }
 
     public static List<BgReading> latest(int number) {
@@ -899,6 +932,21 @@ public class BgReading extends Model implements ShareUploadableBg {
                 .orderBy("timestamp desc")
                 .limit(number)
                 .execute();
+    }
+                
+    /**
+     * Get the count of BG readings in the database
+     * @return The number of BG readings
+     */
+    public static int getLatestCount() {
+        try {
+            return new Select()
+                    .from(BgReading.class)
+                    .count();
+        } catch (Exception e) {
+            Log.e("BgReading", "Error getting count: " + e);
+            return 0;
+        }
     }
 
     public static List<BgReading> latestForGraph(int number, double startTime) {

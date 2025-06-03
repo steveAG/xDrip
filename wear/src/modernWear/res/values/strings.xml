@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App name -->
+    <string name="app_name">xDrip+</string>
+    
+    <!-- Keypad Input Activity -->
+    <string name="enter_value">Enter Value</string>
+    <string name="enter_calibration">Enter Calibration</string>
+    <string name="enter_treatment">Enter Treatment</string>
+    <string name="cancel">Cancel</string>
+    <string name="done">Done</string>
+    <string name="please_enter_value">Please enter a value</string>
+    <string name="invalid_value">Invalid value</string>
+    <string name="value_must_be_positive">Value must be positive</string>
+    <string name="calibration_saved">Calibration saved: %1$.1f</string>
+    <string name="treatment_saved">Treatment saved: %1$.1f</string>
+    
+    <!-- Watch Face Names -->
+    <string name="label_xdrip">xDrip</string>
+    <string name="label_xdrip_large">xDrip (Large)</string>
+    <string name="label_xdrip_big_chart">xDrip (BigChart)</string>
+    <string name="label_xdrip_circle">xDrip (Circle)</string>
+    
+    <!-- Tiles -->
+    <string name="tile_glucose">Glucose</string>
+    <string name="tile_glucose_graph">Glucose Graph</string>
+    <string name="no_glucose_data">No glucose data</string>
+    <string name="minutes_ago">%1$d min ago</string>
+    
+    <!-- Complications -->
+    <string name="complication_label">xDrip Glucose</string>
+    <string name="complication_short_text">%1$s %2$s</string>
+    <string name="complication_long_text">%1$s %2$s (%3$s)</string>
+</resources>

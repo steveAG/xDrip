@@ -49,6 +49,7 @@ import com.eveningoutpost.dexdrip.utilitymodels.RxBleProvider;
 import com.eveningoutpost.dexdrip.utilitymodels.StatusItem;
 import com.eveningoutpost.dexdrip.utilitymodels.StatusItem.Highlight;
 import com.eveningoutpost.dexdrip.utilitymodels.WholeHouse;
+import com.eveningoutpost.dexdrip.utilitymodels.NotificationChannels; // Added import
 import com.eveningoutpost.dexdrip.ui.helpers.Span;
 import com.eveningoutpost.dexdrip.utils.DexCollectionType;
 import com.eveningoutpost.dexdrip.utils.bt.Subscription;

@@ -23,8 +23,11 @@ import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
-import android.support.wearable.complications.ProviderUpdateRequester;
+import android.util.Log;
+
+import androidx.wear.watchface.complications.datasource.ComplicationDataSourceUpdateRequester;
 
 import com.eveningoutpost.dexdrip.KeypadInputActivity;
 import com.eveningoutpost.dexdrip.models.JoH;
@@ -32,12 +35,13 @@ import com.eveningoutpost.dexdrip.utilitymodels.PersistentStore;
 import com.eveningoutpost.dexdrip.xdrip;
 
 /**
- * Simple {@link BroadcastReceiver} subclass for asynchronously incrementing an integer for any
- * complication id triggered via TapAction on complication. Also, provides static method to create
- * a {@link PendingIntent} that triggers this receiver.
+ * BroadcastReceiver that handles complication taps and cycles through different
+ * display states for the complication. Also provides a static method to create
+ * a PendingIntent that triggers this receiver.
  */
 public class ComplicationTapBroadcastReceiver extends BroadcastReceiver {
 
+    private static final String TAG = "ComplicationTapReceiver";
     private static final String EXTRA_PROVIDER_COMPONENT =
             "com.eveningoutpost.dexdrip.wearable.watchface.provider.action.PROVIDER_COMPONENT";
     private static final String EXTRA_COMPLICATION_ID =
@@ -47,27 +51,37 @@ public class ComplicationTapBroadcastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         final Bundle extras = intent.getExtras();
+        if (extras == null) {
+            Log.e(TAG, "No extras in intent");
+            return;
+        }
+        
         final ComponentName provider = extras.getParcelable(EXTRA_PROVIDER_COMPONENT);
         int complicationId = extras.getInt(EXTRA_COMPLICATION_ID);
 
-
+        // Cycle through the complication states
         PersistentStore.incrementLong(COMPLICATION_STORE);
         if (PersistentStore.getLong(COMPLICATION_STORE) == CustomComplicationProviderService.COMPLICATION_STATE.RESET.getValue()) {
             PersistentStore.setLong(COMPLICATION_STORE, 0);
         }
 
+        // Request an update for the complication
+        if (provider != null) {
+            ComplicationDataSourceUpdateRequester requester =
+                ComplicationDataSourceUpdateRequester.create(context, provider);
+            requester.requestUpdateAll();
+            Log.d(TAG, "Complication update requested for id: " + complicationId);
+        }
 
-        // Request an update for the complication that has just been tapped.
-        ProviderUpdateRequester requester = new ProviderUpdateRequester(context, provider);
-        requester.requestUpdate(complicationId);
-
+        // Handle double-tap to open keypad input
         if (!JoH.ratelimit("complication-double-tap", 1)) {
             startIntent(KeypadInputActivity.class);
-            // if we get mre than two states we will need to handle restoring the previous state instead of just incrementing so the complication remains where it was before the double tap
+            // If we get more than two states we will need to handle restoring the previous state
+            // instead of just incrementing so the complication remains where it was before the double tap
         }
     }
 
-    private void startIntent(Class name) {
+    private void startIntent(Class<?> name) {
         Intent intent = new Intent(xdrip.getAppContext(), name);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         xdrip.getAppContext().startActivity(intent);
@@ -85,8 +99,12 @@ public class ComplicationTapBroadcastReceiver extends BroadcastReceiver {
 
         // Pass complicationId as the requestCode to ensure that different complications get
         // different intents.
-        return PendingIntent.getBroadcast(
-                context, complicationId, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            flags |= PendingIntent.FLAG_IMMUTABLE;
+        }
+        
+        return PendingIntent.getBroadcast(context, complicationId, intent, flags);
     }
 
     /**

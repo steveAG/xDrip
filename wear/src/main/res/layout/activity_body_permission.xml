@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.wearable.view.BoxInsetLayout
+<androidx.wear.widget.BoxInsetLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -37,13 +37,13 @@
             android:orientation="horizontal"
             android:padding="5dp">
 
-            <android.support.wearable.view.CircledImageView
+            <androidx.wear.widget.CircledImageView
                 android:id="@+id/circle"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:src="@drawable/ic_lock_open_white_24dp"
-                app:circle_color="#0086D4"
-                app:circle_radius="20dp" />
+                app:circleColor="#0086D4"
+                app:circleRadius="20dp" />
 
             <androidx.legacy.widget.Space
                 android:layout_width="8dp"
@@ -60,4 +60,4 @@
         </LinearLayout>
 
     </LinearLayout>
-</android.support.wearable.view.BoxInsetLayout>
+</androidx.wear.widget.BoxInsetLayout>

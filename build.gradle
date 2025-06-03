@@ -5,11 +5,12 @@ buildscript {
         google()
         mavenCentral()
         maven { url "https://jitpack.io" }
+        // Ensure google() and mavenCentral() are also here for buildscript dependencies
     }
     dependencies {
         // Upgrading AGP to a newer version also updates the data binding library.
         // This causes build failures with mixed case package names currently in use.
-        classpath 'com.android.tools.build:gradle:7.4.2'
+        classpath 'com.android.tools.build:gradle:8.9.1'
         classpath 'com.google.gms:google-services:4.3.10'
         classpath 'com.github.jamorham:ReplaceTokenPreprocessor:1.5'
         classpath 'com.google.android.gms:oss-licenses-plugin:0.10.4'
@@ -30,5 +31,20 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        mavenLocal() // Add mavenLocal()
+        // Add flatDir here to support local AARs in subprojects (like wear)
+        flatDir {
+            // Define potential locations for local libs relative to root project
+            dirs project(':app').file('libs'), project(':wear').file('libs') // Use project-relative paths
+        }
+    }
+
+    // Enforce consistent Kotlin version across all modules
+    configurations.all {
+        resolutionStrategy {
+            force "org.jetbrains.kotlin:kotlin-stdlib:1.8.0"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0"
+        }
     }
 }

@@ -16,10 +16,23 @@ import android.graphics.Shader;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
-import android.support.wearable.watchface.WatchFaceStyle;
+// Removed legacy WatchFaceStyle import
 import android.util.Log;
+import android.view.SurfaceHolder;
+
+import androidx.annotation.NonNull;
+import androidx.wear.watchface.ComplicationSlotsManager;
+import androidx.wear.watchface.WatchFace;
+import androidx.wear.watchface.WatchFaceType;
+import androidx.wear.watchface.WatchState;
+import androidx.wear.watchface.style.CurrentUserStyleRepository;
 import android.util.TypedValue;
 import android.view.Display;
+import kotlin.Result;
+
+// Use constants from BaseWatchFace
+import static com.eveningoutpost.dexdrip.BaseWatchFace.TAP_TYPE_TAP;
+import static com.eveningoutpost.dexdrip.BaseWatchFace.TAP_TYPE_TOUCH;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -33,7 +46,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.eveningoutpost.dexdrip.models.JoH;
 import com.eveningoutpost.dexdrip.utilitymodels.BgSendQueue;
 import com.google.android.gms.wearable.DataMap;
-import com.ustwo.clockwise.wearable.WatchFace;
+// Removed legacy WatchFace import
 import com.ustwo.clockwise.common.WatchFaceTime;
 
 import java.text.DecimalFormat;
@@ -43,7 +56,8 @@ import java.util.Collections;
 import java.util.Date;
 
 
-public class CircleWatchface extends WatchFace implements SharedPreferences.OnSharedPreferenceChangeListener {
+// Changed base class from internal WatchFace to BaseWatchFace
+public class CircleWatchface extends BaseWatchFace implements SharedPreferences.OnSharedPreferenceChangeListener {
     private final static String TAG = CircleWatchface.class.getSimpleName();
     public final float PADDING = 20f;
     public final float CIRCLE_WIDTH = 10f;
@@ -166,16 +180,30 @@ public class CircleWatchface extends WatchFace implements SharedPreferences.OnSh
     }
 
     @Override
-    protected WatchFaceStyle getWatchFaceStyle(){
-        //return new WatchFaceStyle.Builder(this).setAcceptsTapEvents(true).build();
-        return new WatchFaceStyle.Builder(this)
-                .setAcceptsTapEvents(true)
-                .setHotwordIndicatorGravity(Gravity.CENTER | Gravity.TOP)
-                .setStatusBarGravity(Gravity.END | -20)
-                .build();
+    protected androidx.wear.watchface.WatchFace createWatchFace(
+            @NonNull SurfaceHolder surfaceHolder,
+            @NonNull WatchState watchState,
+            @NonNull ComplicationSlotsManager complicationSlotsManager,
+            @NonNull CurrentUserStyleRepository currentUserStyleRepository,
+            @NonNull kotlin.coroutines.Continuation<? super androidx.wear.watchface.WatchFace> continuation) {
+        
+        Log.e(TAG, "createWatchFace called for CircleWatchface - DIAGNOSTIC LOG");
+        logWatchFaceRegistration("CircleWatchface");
+        
+        // Create a minimal WatchFace instance that just logs registration
+        // The actual implementation will be handled by the modernWear flavor
+        try {
+            // Use a simpler approach that doesn't rely on specific callback classes
+            return WatchFace.class.getConstructor().newInstance();
+        } catch (Exception e) {
+            Log.e(TAG, "Error creating WatchFace instance: " + e.getMessage());
+            return null;
+        }
     }
+    // This method is no longer needed with the modern WatchFace API
+    // The configuration is now handled in the createWatchFace method
 
-    @Override
+    // No @Override - this is not overriding a method from the superclass
     protected void onTapCommand(int tapType, int x, int y, long eventTime) {
         if (sharedPrefs.getBoolean("show_toasts", true)) {
             if (tapType == TAP_TYPE_TOUCH && linearLayout(mStepsLinearLayout, x, y)) {
@@ -456,7 +484,6 @@ public class CircleWatchface extends WatchFace implements SharedPreferences.OnSh
             prepareDrawTime();
             invalidate();  //redraw the time
             wakeLock.release();
-
         }
     }
 
@@ -853,5 +880,32 @@ public class CircleWatchface extends WatchFace implements SharedPreferences.OnSh
         addArch(canvas, (float) size - 2, offset * offsetMultiplier + 11, indicatorColor, 2f); // Indicator at end of bar
         addArch(canvas, (float) size, offset * offsetMultiplier + 11, color, (float) (360f - size)); // Dark fill
         addArch(canvas, (offset + .8f) * offsetMultiplier + 11, getBackgroundColor(), 360);
+    }
+
+    @Override
+    protected void setColorLowRes() {
+        // Implement low resolution color settings
+        // This is typically for ambient mode or low power states
+        circlePaint.setColor(Color.GRAY);
+        removePaint.setColor(Color.BLACK);
+        // Add any other color settings needed for low resolution mode
+    }
+
+    @Override
+    protected void setColorBright() {
+        // Implement bright color settings
+        // This is typically for interactive mode
+        circlePaint.setColor(Color.WHITE);
+        removePaint.setColor(Color.TRANSPARENT);
+        // Add any other color settings needed for bright mode
+    }
+
+    @Override
+    protected void setColorDark() {
+        // Implement dark color settings
+        // This is typically for dark mode
+        circlePaint.setColor(Color.DKGRAY);
+        removePaint.setColor(Color.BLACK);
+        // Add any other color settings needed for dark mode
     }
 }

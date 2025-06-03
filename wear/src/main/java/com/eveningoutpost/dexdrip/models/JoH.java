@@ -47,7 +47,9 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.activeandroid.ActiveAndroid;
+import com.eveningoutpost.dexdrip.ExactAlarmPermissionActivity;
 import com.eveningoutpost.dexdrip.Home;
+import com.eveningoutpost.dexdrip.utilitymodels.Pref;
 import com.eveningoutpost.dexdrip.R;
 import com.eveningoutpost.dexdrip.utilitymodels.Constants;
 import com.eveningoutpost.dexdrip.utilitymodels.PersistentStore;
@@ -1170,6 +1172,25 @@ public class JoH {
             } catch (Exception e) {
                 Log.e(TAG, "Exception cancelling alarm in wakeUpIntent: " + e);
             }
+            
+            // Check for exact alarm permission on Android 12+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (!alarm.canScheduleExactAlarms()) {
+                    Log.e(TAG, "Cannot schedule exact alarms - permission not granted");
+                    // Launch permission activity if not already shown
+                    if (!Pref.getBooleanDefaultFalse("exact_alarm_permission_checked")) {
+                        Intent intent = new Intent(context, ExactAlarmPermissionActivity.class);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        context.startActivity(intent);
+                        Pref.setBoolean("exact_alarm_permission_checked", true);
+                    }
+                    // Fall back to inexact alarm
+                    alarm.set(AlarmManager.RTC_WAKEUP, wakeTime, pendingIntent);
+                    return wakeTime;
+                }
+            }
+            
+            // Normal alarm setting logic
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 if (buggy_samsung) {
                     alarm.setAlarmClock(new AlarmManager.AlarmClockInfo(wakeTime, null), pendingIntent);

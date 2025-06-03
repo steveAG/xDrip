@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material Design colors -->
+    <color name="primary">#3F51B5</color>
+    <color name="primary_dark">#303F9F</color>
+    <color name="accent">#FF4081</color>
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="dark_background">#121212</color>
+    
+    <!-- Text colors -->
+    <color name="primary_text">#FFFFFF</color>
+    <color name="secondary_text">#B3FFFFFF</color>
+    <color name="disabled_text">#61FFFFFF</color>
+    <color name="error_text">#F44336</color>
+    
+    <!-- Button colors -->
+    <color name="keypad_button">#2D2D2D</color>
+    <color name="keypad_special_button">#424242</color>
+    <color name="cancel_button">#C62828</color>
+    <color name="done_button">#2E7D32</color>
+    <color name="ripple_color">#33FFFFFF</color>
+    
+    <!-- Input type specific colors -->
+    <color name="calibration_background">#1A237E</color>
+    <color name="treatment_background">#004D40</color>
+    
+    <!-- Glucose range colors -->
+    <color name="glucose_in_range">#4CAF50</color>
+    <color name="glucose_high">#FF9800</color>
+    <color name="glucose_very_high">#F44336</color>
+    <color name="glucose_low">#2196F3</color>
+    <color name="glucose_very_low">#9C27B0</color>
+    <color name="glucose_stale">#757575</color>
+</resources>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wallpaper xmlns:android="http://schemas.android.com/apk/res/android"
+    android:thumbnail="@drawable/watchface_graph"
+    android:settingsActivity="com.eveningoutpost.dexdrip.WatchFaceLauncherActivity"
+    android:description="@string/app_name">
+    
+    <!-- Enhanced configuration for modern Wear OS -->
+    <meta-data
+        android:name="com.google.android.wearable.watchface.preview"
+        android:resource="@drawable/watchface_graph" />
+    <meta-data
+        android:name="com.google.android.wearable.watchface.companionBuiltIn"
+        android:value="true" />
+    <meta-data
+        android:name="com.google.android.wearable.watchface.category"
+        android:value="com.google.android.wearable.watchface.category.WATCH_FACE" />
+    <meta-data
+        android:name="com.google.android.wearable.watchface.preview_circular"
+        android:resource="@drawable/watchface_graph" />
+    <meta-data
+        android:name="com.google.android.wearable.watchface.wearableConfigurationAction"
+        android:value="androidx.wear.watchface.editor.action.WATCH_FACE_EDITOR" />
+    <meta-data
+        android:name="android.service.wallpaper.watchface"
+        android:value="true" />
+    <meta-data
+        android:name="androidx.wear.watchface.WATCH_FACE_TYPE"
+        android:value="DIGITAL" />
+    <!-- Additional metadata for Wear OS 5 compatibility -->
+    <meta-data
+        android:name="androidx.wear.watchface.WATCH_FACE_SYSTEM_VERSION"
+        android:value="2" />
+</wallpaper>

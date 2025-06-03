@@ -7,7 +7,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.speech.RecognizerIntent;
-import android.support.wearable.view.WatchViewStub;
+// Removed legacy WatchViewStub import
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
@@ -86,56 +86,54 @@ public class Simulation extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_simulation);
-        final WatchViewStub stub = (WatchViewStub) findViewById(R.id.watch_view_stub);
+        // Use the direct layout instead of WatchViewStub
+        setContentView(R.layout.rect_activity_simulation);
         final Intent intent = this.getIntent();
-        stub.setOnLayoutInflatedListener(stub1 -> {
-            mTextView = (TextView) stub1.findViewById(R.id.text);
-            mBloodText = (TextView) stub1.findViewById(R.id.textBloodGlucose);
-            mCarbsText = (TextView) stub1.findViewById(R.id.textCarbohydrate);
-            mInsulinText = (TextView) stub1.findViewById(R.id.textInsulinUnits);
-            mTimeText = (TextView) findViewById(R.id.textTimeButton);
-            btnBloodGlucose = (ImageButton) findViewById(R.id.bloodTestButton);
-            btnCarbohydrates = (ImageButton) findViewById(R.id.buttonCarbs);
-            btnInsulinDose = (ImageButton) findViewById(R.id.buttonInsulin);
-            btnCancel = (ImageButton) findViewById(R.id.cancelTreatment);
-            btnApprove = (ImageButton) findViewById(R.id.approveTreatment);
-            btnTime = (ImageButton) findViewById(R.id.timeButton);
+        
+        // Directly find views from the layout
+        mTextView = (TextView) findViewById(R.id.text);
+        mBloodText = (TextView) findViewById(R.id.textBloodGlucose);
+        mCarbsText = (TextView) findViewById(R.id.textCarbohydrate);
+        mInsulinText = (TextView) findViewById(R.id.textInsulinUnits);
+        mTimeText = (TextView) findViewById(R.id.textTimeButton);
+        btnBloodGlucose = (ImageButton) findViewById(R.id.bloodTestButton);
+        btnCarbohydrates = (ImageButton) findViewById(R.id.buttonCarbs);
+        btnInsulinDose = (ImageButton) findViewById(R.id.buttonInsulin);
+        btnCancel = (ImageButton) findViewById(R.id.cancelTreatment);
+        btnApprove = (ImageButton) findViewById(R.id.approveTreatment);
+        btnTime = (ImageButton) findViewById(R.id.timeButton);
 
-            mTextView.setText("");
-            mBloodText.setVisibility(View.INVISIBLE);
-            mCarbsText.setVisibility(View.INVISIBLE);
-            mInsulinText.setVisibility(View.INVISIBLE);
-            mTimeText.setVisibility(View.INVISIBLE);
+        mTextView.setText("");
+        mBloodText.setVisibility(View.INVISIBLE);
+        mCarbsText.setVisibility(View.INVISIBLE);
+        mInsulinText.setVisibility(View.INVISIBLE);
+        mTimeText.setVisibility(View.INVISIBLE);
 
-            btnBloodGlucose.setVisibility(View.INVISIBLE);
-            btnCarbohydrates.setVisibility(View.INVISIBLE);
-            btnInsulinDose.setVisibility(View.INVISIBLE);
-            btnCancel.setVisibility(View.INVISIBLE);
-            btnApprove.setVisibility(View.INVISIBLE);
-            btnTime.setVisibility(View.INVISIBLE);
-            inflated = true;
+        btnBloodGlucose.setVisibility(View.INVISIBLE);
+        btnCarbohydrates.setVisibility(View.INVISIBLE);
+        btnInsulinDose.setVisibility(View.INVISIBLE);
+        btnCancel.setVisibility(View.INVISIBLE);
+        btnApprove.setVisibility(View.INVISIBLE);
+        btnTime.setVisibility(View.INVISIBLE);
+        inflated = true;
 
-            final boolean debug = false;
+        final boolean debug = false;
 
-            if (intent != null) {
+        if (intent != null) {
+            // debug section
+            final Bundle bundle = intent.getExtras();
 
-                // debug section
-
-                final Bundle bundle = intent.getExtras();
-
-                if ((bundle != null) && (debug)) {
-                    for (String key : bundle.keySet()) {
-                        Object value = bundle.get(key);
-                        if (value != null) {
-                            Log.d(TAG, String.format("%s %s (%s)", key,
-                                    value.toString(), value.getClass().getName()));
-                        }
+            if ((bundle != null) && (debug)) {
+                for (String key : bundle.keySet()) {
+                    Object value = bundle.get(key);
+                    if (value != null) {
+                        Log.d(TAG, String.format("%s %s (%s)", key,
+                                value.toString(), value.getClass().getName()));
                     }
                 }
-                processIncomingIntent(intent);
             }
-        });
+            processIncomingIntent(intent);
+        }
 
         Log.i(TAG, "triggered");
         final Bundle bundle = intent.getExtras();

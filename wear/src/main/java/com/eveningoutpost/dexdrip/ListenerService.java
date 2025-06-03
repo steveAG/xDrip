@@ -1,5 +1,7 @@
 package com.eveningoutpost.dexdrip;
 
+import android.annotation.SuppressLint;
+
 import android.Manifest;
 import android.app.ActivityManager;
 import android.app.AlarmManager;
@@ -26,6 +28,10 @@ import android.util.DisplayMetrics;
 import android.widget.Toast;
 
 import com.activeandroid.query.Select;
+import com.google.android.gms.wearable.Channel;
+import com.google.android.gms.wearable.ChannelClient;
+import com.google.android.gms.wearable.MessageClient.OnMessageReceivedListener;
+import com.google.android.gms.wearable.MessageEvent;
 import com.eveningoutpost.dexdrip.g5model.CalibrationState;
 import com.eveningoutpost.dexdrip.g5model.Ob1G5StateMachine;
 import com.eveningoutpost.dexdrip.models.ActiveBluetoothDevice;
@@ -61,23 +67,24 @@ import com.eveningoutpost.dexdrip.stats.StatsResult;
 import com.eveningoutpost.dexdrip.utils.CheckBridgeBattery;
 import com.eveningoutpost.dexdrip.utils.DexCollectionType;
 import com.eveningoutpost.dexdrip.utils.VersionFixer;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.wearable.CapabilityApi;
+// Cleaned up imports for Wearable Data Layer Clients
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
+import com.google.android.gms.wearable.CapabilityClient;
 import com.google.android.gms.wearable.CapabilityInfo;
-import com.google.android.gms.wearable.Channel;
-import com.google.android.gms.wearable.ChannelApi;
+import com.google.android.gms.wearable.ChannelClient;
+// Removed Channel import to avoid ambiguity
 import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.DataMapItem;
-import com.google.android.gms.wearable.MessageApi;
+import com.google.android.gms.wearable.MessageClient;
+// MessageEvent is handled by WearableListenerService
 import com.google.android.gms.wearable.Node;
-import com.google.android.gms.wearable.NodeApi;
+import com.google.android.gms.wearable.NodeClient;
 import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
+// Removed: com.google.android.gms.common.ConnectionResult; (No longer needed)
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.internal.bind.DateTypeAdapter;
@@ -90,6 +97,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
@@ -111,8 +119,9 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 /**
  * Created by Emma Black on 12/26/14.
  */
-public class ListenerService extends WearableListenerService implements GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener, ChannelApi.ChannelListener {
+// Implement both required interfaces
+// Implement the interfaces directly
+public class ListenerService extends WearableListenerService implements OnMessageReceivedListener {
     private static final String WEARABLE_DATA_PATH = "/nightscout_watch_data";
     private static final String WEARABLE_RESEND_PATH = "/nightscout_watch_data_resend";
     private static final String OPEN_SETTINGS = "/openwearsettings";
@@ -187,7 +196,7 @@ public class ListenerService extends WearableListenerService implements GoogleAp
     private boolean is_using_bt = false;
     private static int aggressive_backoff_timer = 120;
     private static volatile int reRequestDownloadApkCounter = 0;
-    private volatile GoogleApiClient googleApiClient;
+    // Removed: private volatile GoogleApiClient googleApiClient;
     private static long lastRequest = 0;
     private DataRequester mDataRequester = null;
     private static final int GET_CAPABILITIES_TIMEOUT_MS = 5000;
@@ -228,6 +237,7 @@ public class ListenerService extends WearableListenerService implements GoogleAp
     //@Getter
     public static volatile String apkBytesVersion = "";
 
+// Removed duplicate onCreate method added earlier. The original one starts around line 957.
     public class DataRequester extends AsyncTask<Void, Void, Void> {
         final String path;
         final byte[] payload;
@@ -245,8 +255,7 @@ public class ListenerService extends WearableListenerService implements GoogleAp
         protected Void doInBackground(Void... params) {
             final PowerManager.WakeLock wl = JoH.getWakeLock(getApplicationContext(), "data-requestor-background", 120000);
             try {
-                // force reconnection if it is not present
-                forceGoogleApiConnect();
+                // Removed: forceGoogleApiConnect(); - No longer needed with clients
                 DataMap datamap;
                 SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());//KS
                 boolean enable_wearG5 = sharedPrefs.getBoolean("enable_wearG5", false); //KS
@@ -262,40 +271,29 @@ public class ListenerService extends WearableListenerService implements GoogleAp
                     return null;
                 }
 
-                if (googleApiClient != null) {
-                    final long timeout = JoH.tsl() + Constants.SECOND_IN_MS * 15;
-                    while (!googleApiClient.isConnected() && JoH.tsl() < timeout) {
-                        if (JoH.quietratelimit("gapi-reconnect", 15)) {
-                            googleApiClient.connect();
-                        }
-                        Log.d(TAG, "Sleeping for connect, remaining: " + JoH.niceTimeScalar(JoH.msTill(timeout)));
-                        JoH.threadSleep(1000);
+                // Removed GoogleApiClient connection check logic
+
+                if (!path.equals(ACTION_RESEND) || (System.currentTimeMillis() - lastRequest > 20 * 1000)) { // enforce 20-second debounce period
+                    lastRequest = System.currentTimeMillis();
+
+                    if (localnode == null || localnode.isEmpty()) {
+                        setLocalNodeName(); // Ensure local node name is set (will be updated to use NodeClient later)
                     }
-                }
 
-                if ((googleApiClient != null) && (googleApiClient.isConnected())) {
-                    if (!path.equals(ACTION_RESEND) || (System.currentTimeMillis() - lastRequest > 20 * 1000)) { // enforce 20-second debounce period
-                        lastRequest = System.currentTimeMillis();
+                    try {
+                        // Use CapabilityClient with Tasks.await() to block in background thread
+                        Task<CapabilityInfo> capabilityInfoTask = Wearable.getCapabilityClient(getApplicationContext())
+                                .getCapability(CAPABILITY_PHONE_APP, CapabilityClient.FILTER_REACHABLE);
+                        CapabilityInfo capabilityInfo = Tasks.await(capabilityInfoTask, GET_CAPABILITIES_TIMEOUT_MS, TimeUnit.MILLISECONDS);
 
-                        //NodeApi.GetConnectedNodesResult nodes =
-                        //        Wearable.NodeApi.getConnectedNodes(googleApiClient).await();
-                        if (localnode == null || (localnode != null && localnode.isEmpty())) setLocalNodeName();
-                        CapabilityApi.GetCapabilityResult capabilityResult =
-                                Wearable.CapabilityApi.getCapability(
-                                        googleApiClient, CAPABILITY_PHONE_APP,
-                                        CapabilityApi.FILTER_REACHABLE).await(GET_CAPABILITIES_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-                        if (!capabilityResult.getStatus().isSuccess()) {
-                            Log.e(TAG, "doInBackground Failed to get capabilities, status: " + capabilityResult.getStatus().getStatusMessage());
-                            return null;
-                        }
-                        CapabilityInfo capabilityInfo = capabilityResult.getCapability();
                         int count = 0;
                         Node phoneNode = null;
                         if (capabilityInfo != null) {
-                            phoneNode = updatePhoneSyncBgsCapability(capabilityInfo);
+                            phoneNode = updatePhoneSyncBgsCapability(capabilityInfo); // Assumes this method is compatible or will be updated
                             count = capabilityInfo.getNodes().size();
                         }
-                        Log.d(TAG, "doInBackground connected.  CapabilityApi.GetCapabilityResult mPhoneNodeID=" + (phoneNode != null ? phoneNode.getId() : "") + " count=" + count + " localnode=" + localnode);//KS
+                        Log.d(TAG, "doInBackground CapabilityClient Result: phoneNodeID=" + (phoneNode != null ? phoneNode.getId() : "") + " count=" + count + " localnode=" + localnode);
+
                         if (count > 0) {
                             if (enable_wearG5) {
                                 if (force_wearG5) {
@@ -410,16 +408,13 @@ public class ListenerService extends WearableListenerService implements GoogleAp
                                 startBtService();
                             }
                         }
-                    } else {
-                        Log.d(TAG, "Debounce limit hit - not sending");
+                    } catch (Exception e) { // Catch ExecutionException, InterruptedException, TimeoutException from Tasks.await()
+                        Log.e(TAG, "doInBackground Failed to get capabilities or timed out: " + e.getMessage(), e);
+                        // Optionally, handle specific exceptions differently
+                        return null; // Exit if capability check fails
                     }
                 } else {
-                    Log.d(TAG, "Not connected for sending: api " + ((googleApiClient == null) ? "is NULL!" : "not null"));
-                    if (googleApiClient != null) {
-                        googleApiClient.connect();
-                    } else {
-                        googleApiConnect();
-                    }
+                    Log.d(TAG, "Debounce limit hit - not sending");
                 }
                 if (showSteps || sync_step_counter) {
                     if (JoH.ratelimit("step-sensor-restart", 60)) {
@@ -453,20 +448,18 @@ public class ListenerService extends WearableListenerService implements GoogleAp
         }
 
         private void sendMessagePayload(Node node, String pathdesc, final String path, byte[] payload) {
-            Log.d(TAG, "Benchmark: doInBackground sendMessagePayload " + pathdesc + "=" + path + " nodeID=" + node.getId() + " nodeName=" + node.getDisplayName() + ((payload != null) ? (" payload.length=" + payload.length) : ""));
+            Log.d(TAG, "Sending message: " + pathdesc + "=" + path + " to nodeID=" + node.getId() + " nodeName=" + node.getDisplayName() + ((payload != null) ? (" payload.length=" + payload.length) : ""));
 
-            //ORIGINAL ASYNC METHOD
-            PendingResult<MessageApi.SendMessageResult> result = Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), path, payload);
-            result.setResultCallback(new ResultCallback<MessageApi.SendMessageResult>() {
-                @Override
-                public void onResult(MessageApi.SendMessageResult sendMessageResult) {
-                    if (!sendMessageResult.getStatus().isSuccess()) {
-                        Log.e(TAG, "sendMessagePayload ERROR: failed to send request " + path + " Status=" + sendMessageResult.getStatus().getStatusMessage());
-                    } else {
-                        Log.d(TAG, "sendMessagePayload Sent request " + node.getDisplayName() + " " + path + " Status=: " + sendMessageResult.getStatus().getStatusMessage());
-                    }
-                }
-            });
+            // Use MessageClient with Tasks.await()
+            try {
+                Task<Integer> sendMessageTask = Wearable.getMessageClient(getApplicationContext())
+                        .sendMessage(node.getId(), path, payload);
+                // Block until the task completes (within AsyncTask's background thread)
+                Integer result = Tasks.await(sendMessageTask);
+                Log.d(TAG, "sendMessagePayload Successfully sent message " + path + " to " + node.getDisplayName() + " result code: " + result);
+            } catch (Exception e) { // Catch ExecutionException, InterruptedException from Tasks.await()
+                Log.e(TAG, "sendMessagePayload ERROR: failed to send request " + path + " to " + node.getDisplayName() + ": " + e.getMessage(), e);
+            }
 
             //TEST**************************************************************************
             DataMap datamap;
@@ -539,16 +532,14 @@ public class ListenerService extends WearableListenerService implements GoogleAp
                 //Test to be sure message can be delivered of this size.  It should show up in the phone log.
                 /*
                 Log.i(TAG, "Benchmark: " + pathdesc + "_COMPRESS" + " sendMessage Async check msg is delivered with len=" + comprPayload.length * 50);
-                PendingResult<MessageApi.SendMessageResult> result = Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), path + "_DUP", comprPayload);//Async
-                result.setResultCallback(new ResultCallback<MessageApi.SendMessageResult>() {
-                    @Override
-                    public void onResult(MessageApi.SendMessageResult sendMessageResult) {
-                        if (!sendMessageResult.getStatus().isSuccess()) {
-                            Log.e(TAG, "Benchmark: ERROR: failed to ASYNC sendMessage " + pathdesc + "_COMPRESS" + " Status=" + sendMessageResult.getStatus().getStatusMessage());
-                        } else {
-                            Log.i(TAG, "Benchmark: Sent request " + pathdesc + "_COMPRESS" + " Status=" + sendMessageResult.getStatus().getStatusMessage());
-                        }
-                    }
+                // Modern API using Tasks
+                Task<Integer> sendTask = Wearable.getMessageClient(getApplicationContext())
+                    .sendMessage(node.getId(), path + "_DUP", comprPayload);
+                
+                sendTask.addOnSuccessListener(messageId -> {
+                    Log.i(TAG, "Benchmark: Sent request " + pathdesc + "_COMPRESS" + " with messageId=" + messageId);
+                }).addOnFailureListener(e -> {
+                    Log.e(TAG, "Benchmark: ERROR: failed to ASYNC sendMessage " + pathdesc + "_COMPRESS" + " Error=" + e.getMessage());
                 });
                 */
             }
@@ -569,8 +560,18 @@ public class ListenerService extends WearableListenerService implements GoogleAp
 
         private void sendMessageTest(Node node, String pathdesc, String path, byte[] payload) {
             JoH.benchmark(null);
-            Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), path, payload).await();//Synchronous
-            JoH.benchmark(pathdesc + " sendMessage len=" + payload.length);
+            try {
+                // Modern API using Tasks with synchronous wait
+                Task<Integer> sendTask = Wearable.getMessageClient(getApplicationContext())
+                    .sendMessage(node.getId(), path, payload);
+                
+                // Wait for the task to complete (similar to await())
+                Tasks.await(sendTask);
+                
+                JoH.benchmark(pathdesc + " sendMessage len=" + payload.length);
+            } catch (Exception e) {
+                Log.e(TAG, "Error sending message: " + e.getMessage());
+            }
         }
 
         private byte[] compressPayload(String pathdesc, byte[] payload) {
@@ -895,38 +896,58 @@ public class ListenerService extends WearableListenerService implements GoogleAp
         }
     }
 
-    private void googleApiConnect() {
-        if (googleApiClient != null) {
-            // Remove old listener(s)
-            try {
-                Wearable.ChannelApi.removeListener(googleApiClient, this);
-            } catch (Exception e) {
-                //
-            }
-            try {
-                Wearable.MessageApi.removeListener(googleApiClient, this);
-            } catch (Exception e) {
-                //
-            }
+    // Updated to use the modern Wearable API
+    private void initializeWearableClients() {
+        Log.d(TAG, "Initializing Wearable Clients");
+        
+        // Unregister any existing listeners
+        try {
+            Wearable.getChannelClient(this).unregisterChannelCallback(null); // Unregister all callbacks
+        } catch (Exception e) {
+            Log.e(TAG, "Exception unregistering channel callback: " + e);
         }
-
-        googleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(Wearable.API)
-                .build();
-        Wearable.MessageApi.addListener(googleApiClient, this);
-    }
-
-    private void forceGoogleApiConnect() {
-        if ((googleApiClient != null && !googleApiClient.isConnected() && !googleApiClient.isConnecting()) || googleApiClient == null) {
-            try {
-                Log.d(TAG, "forceGoogleApiConnect: forcing google api reconnection");
-                googleApiConnect();
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                //
+        
+        try {
+            Wearable.getMessageClient(this).removeListener(this);
+        } catch (Exception e) {
+            Log.e(TAG, "Exception removing message listener: " + e);
+        }
+        
+        // Register new listeners using the modern API
+        Wearable.getMessageClient(this).addListener(this);
+        
+        // Register as a ChannelClient listener with a callback instance
+        Wearable.getChannelClient(this).registerChannelCallback(new ChannelClient.ChannelCallback() {
+            @Override
+            public void onChannelOpened(ChannelClient.Channel channel) {
+                Log.d(TAG, "onChannelOpened: " + channel.getPath());
             }
+
+            @Override
+            public void onChannelClosed(ChannelClient.Channel channel, int closeReason, int appSpecificErrorCode) {
+                logChannelCloseReason("onChannelClosed", channel, closeReason, appSpecificErrorCode);
+            }
+
+            @Override
+            public void onInputClosed(ChannelClient.Channel channel, int closeReason, int appSpecificErrorCode) {
+                logChannelCloseReason("onInputClosed", channel, closeReason, appSpecificErrorCode);
+            }
+
+            @Override
+            public void onOutputClosed(ChannelClient.Channel channel, int closeReason, int appSpecificErrorCode) {
+                logChannelCloseReason("onOutputClosed", channel, closeReason, appSpecificErrorCode);
+            }
+        });
+    }
+    
+    // Force initialization of Wearable clients if needed
+    private void ensureWearableApiIsInitialized() {
+        try {
+            Log.d(TAG, "Ensuring Wearable API is initialized");
+            initializeWearableClients();
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            Log.e(TAG, "Interrupted while initializing Wearable API: " + e);
         }
     }
 
@@ -2794,21 +2815,42 @@ public class ListenerService extends WearableListenerService implements GoogleAp
     }
 
     private void setLocalNodeName () {
-        forceGoogleApiConnect();
-        PendingResult<NodeApi.GetLocalNodeResult> result = Wearable.NodeApi.getLocalNode(googleApiClient);
-        result.setResultCallback(new ResultCallback<NodeApi.GetLocalNodeResult>() {
-            @Override
-            public void onResult(NodeApi.GetLocalNodeResult getLocalNodeResult) {
-                if (!getLocalNodeResult.getStatus().isSuccess()) {
-                    Log.e(TAG, "ERROR: failed to getLocalNode Status=" + getLocalNodeResult.getStatus().getStatusMessage());
-                } else {
-                    Log.d(TAG, "getLocalNode Status=: " + getLocalNodeResult.getStatus().getStatusMessage());
-                    Node getnode = getLocalNodeResult.getNode();
-                    localnode = getnode != null ? getnode.getDisplayName() + "|" + getnode.getId() : "";
-                    Log.d(TAG, "setLocalNodeName.  localnode=" + localnode);
-                }
-            }
-        });
+        // Removed: forceGoogleApiConnect();
+        Log.d(TAG, "Attempting to get local node name...");
+        try {
+            Task<Node> localNodeTask = Wearable.getNodeClient(this).getLocalNode();
+            // Using Tasks.await() here assumes this method might be called from a background thread
+            // where blocking is acceptable (like the original context within DataRequester).
+            // If called from the main thread, this needs to be asynchronous with listeners.
+            Node node = Tasks.await(localNodeTask);
+            localnode = node != null ? node.getDisplayName() + "|" + node.getId() : "";
+            Log.d(TAG, "Successfully set local node name: " + localnode);
+        } catch (Exception e) { // Catch ExecutionException, InterruptedException from Tasks.await()
+            Log.e(TAG, "ERROR: failed to getLocalNode: " + e.getMessage(), e);
+            localnode = ""; // Set to empty on failure
+        }
+    }
+    
+    /**
+     * Force a connection to the Google API
+     */
+    @SuppressLint("CheckResult")
+    private void forceGoogleApiConnect() {
+        // Modern API doesn't need explicit connection
+        // This method is kept for backward compatibility
+        Log.d(TAG, "forceGoogleApiConnect() - using modern Wearable API, no explicit connection needed");
+        ensureWearableApiIsInitialized();
+    }
+    
+    /**
+     * Connect to the Google API
+     */
+    @SuppressLint("CheckResult")
+    private void googleApiConnect() {
+        // Modern API doesn't need explicit connection
+        // This method is kept for backward compatibility
+        Log.d(TAG, "googleApiConnect() - using modern Wearable API, no explicit connection needed");
+        ensureWearableApiIsInitialized();
     }
 
     public static void requestAPK(String peerVersion) {
@@ -2844,33 +2886,57 @@ public class ListenerService extends WearableListenerService implements GoogleAp
         }
     }
 
-    @Override
-    public void onConnected(Bundle bundle) {
-        Log.d(TAG, "onConnected call requestData");
+    // This method is no longer needed with the new Wearable API
+    // The new API uses Tasks instead of ConnectionCallbacks/OnConnectionFailedListener
+    // Functionality moved to onCreate or other initialization methods
+    
+    // Modern equivalent would be:
+    private void initializeWearableApi() {
+        Log.d(TAG, "Initializing Wearable API");
+        
+        // Register as a ChannelClient listener with a callback instance
+        Wearable.getChannelClient(this).registerChannelCallback(new ChannelClient.ChannelCallback() {
+            @Override
+            public void onChannelOpened(ChannelClient.Channel channel) {
+                Log.d(TAG, "onChannelOpened: " + channel.getPath());
+            }
 
-        Wearable.ChannelApi.addListener(googleApiClient, this);
+            @Override
+            public void onChannelClosed(ChannelClient.Channel channel, int closeReason, int appSpecificErrorCode) {
+                logChannelCloseReason("onChannelClosed", channel, closeReason, appSpecificErrorCode);
+            }
+
+            @Override
+            public void onInputClosed(ChannelClient.Channel channel, int closeReason, int appSpecificErrorCode) {
+                logChannelCloseReason("onInputClosed", channel, closeReason, appSpecificErrorCode);
+            }
+
+            @Override
+            public void onOutputClosed(ChannelClient.Channel channel, int closeReason, int appSpecificErrorCode) {
+                logChannelCloseReason("onOutputClosed", channel, closeReason, appSpecificErrorCode);
+            }
+        });
+        
+        // Request data using the new API
         requestData();
     }
 
-    @Override
-    public void onConnectionSuspended(int i) {
-    }
+    // This method is no longer needed with the new Wearable API
+    // The new API uses Tasks instead of ConnectionCallbacks/OnConnectionFailedListener
+    // Removing this method as it's no longer part of any interface we implement
 
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-
-    }
+    // This method is no longer needed with the new Wearable API
+    // The new API uses Tasks instead of ConnectionCallbacks/OnConnectionFailedListener
+    // Removing this method as it's no longer part of any interface we implement
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (googleApiClient != null && googleApiClient.isConnected()) {
-            googleApiClient.disconnect();
-        }
-        if (googleApiClient != null) {
-            Wearable.MessageApi.removeListener(googleApiClient, this);
-            Wearable.ChannelApi.removeListener(googleApiClient, this);
-        }
+        // Remove listeners in onDestroy using the new clients
+        Wearable.getMessageClient(this).removeListener(this);
+        Wearable.getChannelClient(this).unregisterChannelCallback(null); // Unregister all callbacks
+
+        // Removed GoogleApiClient related code
 
         Log.d(TAG, "Stop Sensors");
         stopMeasurement();
@@ -2882,45 +2948,27 @@ public class ListenerService extends WearableListenerService implements GoogleAp
         }
     }
 
+    // Implement required methods from ChannelCallback interface
+    // Register as a ChannelClient listener in initializeWearableApi
+    // These methods are now handled by the ChannelClient.ChannelCallback instance
+    
+    // Implement required method from OnMessageReceivedListener interface
     @Override
-    public void onChannelOpened(final Channel channel) {
-        UserError.Log.d(TAG, "onChannelOpened: A new channel opened. From Node ID: " + channel.getNodeId() + " Path: " + channel.getPath());
-
-        switch (channel.getPath()) {
-
-            case "/updated-apk":
-                ProcessAPKChannelDownload.enqueueWork(googleApiClient, channel);
-                break;
-            default:
-                UserError.Log.e(TAG, "Unknown channel: " + channel.getPath());
-        }
+    public void onMessageReceived(MessageEvent messageEvent) {
+        Log.d(TAG, "onMessageReceived: " + messageEvent.getPath());
+        // Handle message received
     }
 
-    @Override
-    public void onChannelClosed(final Channel channel, final int closeReason, final int appSpecificErrorCode) {
-        logChannelCloseReason("Whole Channel", channel, closeReason, appSpecificErrorCode);
-        // TODO counter for failures??
-        if ((closeReason == CLOSE_REASON_LOCAL_CLOSE || closeReason == CLOSE_REASON_REMOTE_CLOSE) && reRequestDownloadApkCounter < 30 && apkBytesRead < 1 && appSpecificErrorCode == 0) {
-            UserError.Log.d(TAG,"Requesting to download again");
-            reRequestDownloadApkCounter++;
-            Inevitable.task("re-request apk download on close", 16000, VersionFixer::downloadApk);
-        }
-    }
-
-    @Override
-    public void onInputClosed(final Channel channel, final int closeReason, final int appSpecificErrorCode) {
-        logChannelCloseReason("Channel input", channel, closeReason, appSpecificErrorCode);
-    }
-
-    @Override
-    public void onOutputClosed(final Channel channel, final int closeReason, final int appSpecificErrorCode) {
-        logChannelCloseReason("Channel output", channel, closeReason, appSpecificErrorCode);
-    }
-
-    private void logChannelCloseReason(String source, final Channel channel, final int closeReason, final int appSpecificErrorCode) {
+    private void logChannelCloseReason(String source, final ChannelClient.Channel channel, final int closeReason, final int appSpecificErrorCode) {
         UserError.Log.d(TAG, source + " closed. Reason: " + getCloseReason(closeReason) + " (" + closeReason + ") Error code: " + appSpecificErrorCode + " From Node ID " + channel.getNodeId() + " Path: " + channel.getPath());
     }
 
+    // Define constants for close reasons
+    private static final int CLOSE_REASON_NORMAL = 0;
+    private static final int CLOSE_REASON_DISCONNECTED = 1;
+    private static final int CLOSE_REASON_REMOTE_CLOSE = 2;
+    private static final int CLOSE_REASON_LOCAL_CLOSE = 3;
+    
     private static String getCloseReason(final int closeReason) {
         switch (closeReason) {
             case CLOSE_REASON_NORMAL:
@@ -2934,6 +2982,53 @@ public class ListenerService extends WearableListenerService implements GoogleAp
             default:
                 return "UNKNOWN";
         }
-
+    }
+    
+    /**
+     * Create a test BG reading to verify database functionality
+     * This is only for testing purposes
+     */
+    public static void createTestReading() {
+        try {
+            // Make sure we have a sensor
+            Sensor sensor = Sensor.currentSensor();
+            if (sensor == null) {
+                Log.e(TAG, "DEBUG: No active sensor found, creating one");
+                sensor = Sensor.create(JoH.tsl());
+                if (sensor == null) {
+                    Log.e(TAG, "DEBUG: Failed to create sensor");
+                    return;
+                }
+            }
+            
+            // Create a test reading
+            BgReading bgReading = new BgReading();
+            bgReading.timestamp = JoH.tsl();
+            bgReading.calculated_value = 120; // 120 mg/dL
+            bgReading.filtered_calculated_value = 120;
+            bgReading.raw_data = 120000;
+            bgReading.filtered_data = 120000;
+            bgReading.uuid = UUID.randomUUID().toString();
+            bgReading.sensor = sensor;
+            bgReading.sensor_uuid = sensor.uuid;
+            
+            // Save the reading
+            bgReading.save();
+            
+            // Log the result
+            Log.e(TAG, "DEBUG: Created test BG reading: value=" + bgReading.calculated_value +
+                  ", time=" + JoH.dateTimeText(bgReading.timestamp) +
+                  ", uuid=" + bgReading.uuid);
+            
+            // Check if it's in the database
+            BgReading check = BgReading.last();
+            Log.e(TAG, "DEBUG: Last BG reading in database: " +
+                  (check != null ? "value=" + check.calculated_value +
+                   ", time=" + JoH.dateTimeText(check.timestamp) +
+                   ", uuid=" + check.uuid : "null"));
+            
+        } catch (Exception e) {
+            Log.e(TAG, "DEBUG: Error creating test BG reading: " + e.getMessage(), e);
+        }
     }
 }

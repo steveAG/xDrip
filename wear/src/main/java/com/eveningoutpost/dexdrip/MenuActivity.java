@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.support.wearable.view.WatchViewStub;
+// Removed legacy WatchViewStub import
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Toast;
@@ -43,22 +43,21 @@ public class MenuActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_menu);
+        // Use the direct layout instead of WatchViewStub
+        setContentView(R.layout.rect_activity_menu);
         currenttab = "";
-        final WatchViewStub stub = (WatchViewStub) findViewById(R.id.watch_view_stub);
-        stub.setOnLayoutInflatedListener(new WatchViewStub.OnLayoutInflatedListener() {
-            @Override
-            public void onLayoutInflated(WatchViewStub stub) {
-                //mDialTextView = (TextView) stub.findViewById(R.id.dialed_no_textview);
-
-                addtreatmentbutton = (ImageButton) stub.findViewById(R.id.addtreatmentbutton);
-                restartcollectorbutton = (ImageButton) stub.findViewById(R.id.restartcollectorbutton);
-                refreshdbbutton = (ImageButton) stub.findViewById(R.id.refreshdbbutton);
-                xdripprefsbutton = (ImageButton) stub.findViewById(R.id.xdripprefsbutton);
-                bloodtesttabbutton = (ImageButton) stub.findViewById(R.id.bloodtesttabbutton);
-                treatmenttabbutton = (ImageButton) stub.findViewById(R.id.treatmenttabbutton);
-                calibrationtabbutton = (ImageButton) stub.findViewById(R.id.calibrationtabbutton);
-                bgtabbutton = (ImageButton) stub.findViewById(R.id.bgtabbutton);
+        
+        // Directly find views from the layout
+        //mDialTextView = (TextView) findViewById(R.id.dialed_no_textview);
+        
+        addtreatmentbutton = (ImageButton) findViewById(R.id.addtreatmentbutton);
+        restartcollectorbutton = (ImageButton) findViewById(R.id.restartcollectorbutton);
+        refreshdbbutton = (ImageButton) findViewById(R.id.refreshdbbutton);
+        xdripprefsbutton = (ImageButton) findViewById(R.id.xdripprefsbutton);
+        bloodtesttabbutton = (ImageButton) findViewById(R.id.bloodtesttabbutton);
+        treatmenttabbutton = (ImageButton) findViewById(R.id.treatmenttabbutton);
+        calibrationtabbutton = (ImageButton) findViewById(R.id.calibrationtabbutton);
+                bgtabbutton = (ImageButton) findViewById(R.id.bgtabbutton);
 
                 if (Home.get_forced_wear())
                     restartcollectorbutton.setVisibility(View.VISIBLE);
@@ -132,9 +131,7 @@ public class MenuActivity extends Activity {
                     }
                 });
 
-                updateTab();
-            }
-        });
+        updateTab();
     }
 
     private void updateTab() {

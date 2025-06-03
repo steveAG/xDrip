@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Standard dimensions for Wear OS -->
+    <dimen name="box_inset_layout_padding">8dp</dimen>
+    <dimen name="inner_frame_layout_padding">4dp</dimen>
+    
+    <!-- Text sizes -->
+    <dimen name="text_size_small">12sp</dimen>
+    <dimen name="text_size_medium">16sp</dimen>
+    <dimen name="text_size_large">20sp</dimen>
+    <dimen name="text_size_xlarge">24sp</dimen>
+    
+    <!-- Button dimensions -->
+    <dimen name="button_padding">8dp</dimen>
+    <dimen name="button_margin">4dp</dimen>
+    <dimen name="button_corner_radius">4dp</dimen>
+    
+    <!-- Keypad specific dimensions -->
+    <dimen name="keypad_button_margin">2dp</dimen>
+    <dimen name="keypad_button_text_size">18sp</dimen>
+    <dimen name="keypad_value_text_size">24sp</dimen>
+    <dimen name="keypad_title_text_size">16sp</dimen>
+</resources>

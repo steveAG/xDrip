@@ -1,399 +1,225 @@
 package com.eveningoutpost.dexdrip;
 
 import android.app.Activity;
-import android.graphics.Color;
+import android.content.Intent;
 import android.os.Bundle;
-import android.support.wearable.view.WatchViewStub;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.TextView;
-
-import com.eveningoutpost.dexdrip.models.JoH;
-
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import android.widget.Toast;
 
 /**
- * Adapted from WearDialer which is:
- * <p/>
- * Confirmed as in the public domain by Kartik Arora who also maintains the
- * Potato Library: http://kartikarora.me/Potato-Library
+ * Activity for keypad input in xDrip+ Wear
+ * 
+ * Allows users to enter numeric values (e.g., calibrations, treatments)
+ * with a simple keypad interface optimized for wearable devices.
  */
-
-// jamorham xdrip plus
-
 public class KeypadInputActivity extends Activity {
 
-    private final static String TAG = "jamorham " + KeypadInputActivity.class.getSimpleName();
-    private TextView mDialTextView;
-    private Button zeroButton, oneButton, twoButton, threeButton, fourButton, fiveButton,
-            sixButton, sevenButton, eightButton, nineButton, starButton, backSpaceButton;
-    private ImageButton callImageButton, backspaceImageButton, insulintabbutton, carbstabbutton,
-            bloodtesttabbutton, timetabbutton;
-    //private GoogleApiClient mApiClient;
-    private static String currenttab = "insulin";
-    private static Map<String, String> values = new HashMap<String, String>();
-    private static final String WEARABLE_VOICE_PAYLOAD = "/xdrip_plus_voice_payload";
-
+    private static final String TAG = "KeypadInputActivity";
+    
+    // Input types
+    public static final String INTENT_EXTRA_INPUT_TYPE = "InputType";
+    public static final String INTENT_EXTRA_INITIAL_VALUE = "InitialValue";
+    public static final String INTENT_EXTRA_UNITS = "Units";
+    
+    public static final int INPUT_TYPE_CALIBRATION = 1;
+    public static final int INPUT_TYPE_TREATMENT = 2;
+    
+    private static double lastValue = 0;
+    private static int lastInputType = INPUT_TYPE_CALIBRATION;
+    
+    private int inputType;
+    private String units = "";
+    private StringBuilder inputBuffer = new StringBuilder();
+    private TextView valueView;
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        final WatchViewStub stub = (WatchViewStub) findViewById(R.id.watch_view_stub);
-        stub.setOnLayoutInflatedListener(new WatchViewStub.OnLayoutInflatedListener() {
-            @Override
-            public void onLayoutInflated(WatchViewStub stub) {
-                mDialTextView = (TextView) stub.findViewById(R.id.dialed_no_textview);
-                zeroButton = (Button) stub.findViewById(R.id.zero_button);
-                oneButton = (Button) stub.findViewById(R.id.one_button);
-                twoButton = (Button) stub.findViewById(R.id.two_button);
-                threeButton = (Button) stub.findViewById(R.id.three_button);
-                fourButton = (Button) stub.findViewById(R.id.four_button);
-                fiveButton = (Button) stub.findViewById(R.id.five_button);
-                sixButton = (Button) stub.findViewById(R.id.six_button);
-                sevenButton = (Button) stub.findViewById(R.id.seven_button);
-                eightButton = (Button) stub.findViewById(R.id.eight_button);
-                nineButton = (Button) stub.findViewById(R.id.nine_button);
-                starButton = (Button) stub.findViewById(R.id.star_button);
-                backSpaceButton = (Button) stub.findViewById(R.id.backspace_button);
-                // callImageButton = (ImageButton) stub.findViewById(R.id.call_image_button);
-                // backspaceImageButton = (ImageButton) stub.findViewById(R.id.backspace_image_button);
-
-                insulintabbutton = (ImageButton) stub.findViewById(R.id.insulintabbutton);
-                bloodtesttabbutton = (ImageButton) stub.findViewById(R.id.bloodtesttabbutton);
-                timetabbutton = (ImageButton) stub.findViewById(R.id.timetabbutton);
-                carbstabbutton = (ImageButton) stub.findViewById(R.id.carbstabbutton);
-
-
-                mDialTextView.setText("");
-
-                mDialTextView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        submitAll();
-                    }
-                });
-
-                zeroButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        appCurrent("0");
-                    }
-                });
-
-                //zeroButton.setOnLongClickListener(new View.OnLongClickListener() {
-                //    @Override
-                //    public boolean onLongClick(View v) {
-                //        mDialTextView.setText(mDialTextView.getText() + "+");
-                //        return true;
-                //    }
-                //});
-
-                oneButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        appCurrent("1");
-                    }
-                });
-
-                twoButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        appCurrent("2");
-                    }
-                });
-
-                threeButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        appCurrent("3");
-                    }
-                });
-
-                fourButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        appCurrent("4");
-                    }
-                });
-
-                fiveButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        appCurrent("5");
-                    }
-                });
-
-                sixButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        appCurrent("6");
-                    }
-                });
-
-                sevenButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        appCurrent("7");
-                    }
-                });
-
-                eightButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        appCurrent("8");
-                    }
-                });
-
-                nineButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        appCurrent("9");
-                    }
-                });
-
-                starButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        if (!getValue(currenttab).contains(".")) appCurrent(".");
-                    }
-                });
-
-                //hashButton.setOnClickListener(new View.OnClickListener() {
-                //    @Override
-                //    public void onClick(View v) {
-                //        mDialTextView.setText(mDialTextView.getText() + "#");
-                //    }
-                //});
-
-                backSpaceButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        appBackSpace();
-                    }
-                });
-                backSpaceButton.setOnLongClickListener(new View.OnLongClickListener() {
-                    @Override
-                    public boolean onLongClick(View v) {
-                        values.put(currenttab, "");
-                        updateTab();
-                        return true;
-                    }
-                });
-
-                bloodtesttabbutton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        currenttab = "bloodtest";
-                        updateTab();
-                    }
-                });
-                insulintabbutton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        currenttab = "insulin";
-                        updateTab();
-                    }
-                });
-                carbstabbutton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        currenttab = "carbs";
-                        updateTab();
-                    }
-                });
-                timetabbutton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        currenttab = "time";
-                        updateTab();
-                    }
-                });
-
-
-                updateTab();
-
-             /*   callImageButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        if (!mDialTextView.getText().toString().isEmpty()) {
-                            sendMessage(mDialTextView.getText().toString(), null);
-                            Toast.makeText(getApplicationContext(), "Calling " + mDialTextView.getText(), Toast.LENGTH_SHORT).show();
-                            mDialTextView.setText(null);
-                        }
-                    }
-                });*/
+        setContentView(R.layout.activity_keypad_input);
+        
+        // Get input type from intent
+        Intent intent = getIntent();
+        inputType = intent.getIntExtra(INTENT_EXTRA_INPUT_TYPE, lastInputType);
+        lastInputType = inputType;
+        
+        // Get initial value if provided
+        double initialValue = intent.getDoubleExtra(INTENT_EXTRA_INITIAL_VALUE, lastValue);
+        if (initialValue > 0) {
+            inputBuffer.append(String.valueOf((int)initialValue));
+        }
+        
+        // Get units if provided
+        units = intent.getStringExtra(INTENT_EXTRA_UNITS);
+        if (units == null) units = "";
+        
+        // Set up UI
+        setupUI();
+    }
+    
+    private void setupUI() {
+        // Set title based on input type
+        TextView titleView = findViewById(R.id.keypad_title);
+        if (titleView != null) {
+            if (inputType == INPUT_TYPE_CALIBRATION) {
+                titleView.setText(R.string.enter_calibration);
+            } else if (inputType == INPUT_TYPE_TREATMENT) {
+                titleView.setText(R.string.enter_treatment);
             }
-        });
-    }
-
-    public static void resetValues() {
-        values = new HashMap<String, String>();
-    }
-
-    private static String getValue(String tab) {
-        if (values.containsKey(tab)) {
-            return values.get(tab);
-        } else {
-            values.put(tab, "");
-            return values.get(tab);
         }
+        
+        // Set up value display
+        valueView = findViewById(R.id.keypad_value);
+        updateValueDisplay();
+        
+        // Set up keypad buttons
+        setupKeypadButtons();
+        
+        // Set up action buttons
+        setupActionButtons();
     }
-
-    private static String appendValue(String tab, String append) {
-        values.put(tab, getValue(tab) + append);
-        return values.get(tab);
-    }
-
-    private static String appendCurrent(String append) {
-        String cval = getValue(currenttab);
-        if (cval.length() < 6) {
-            if ((cval.length() == 0) && (append.equals("."))) append = "0.";
-            return appendValue(currenttab, append);
-        } else {
-            return cval;
-        }
-    }
-
-    private void appCurrent(String append) {
-        appendCurrent(append);
-        updateTab();
-    }
-
-    private void appBackSpace() {
-        String cval = getValue(currenttab);
-        if (cval.length() > 0) {
-            values.put(currenttab, cval.substring(0, cval.length() - 1));
-        }
-        updateTab();
-    }
-
-    private String getTime() {
-        final Calendar c = Calendar.getInstance();
-        final SimpleDateFormat simpleDateFormat1 = new SimpleDateFormat("HH.mm", Locale.US);
-        final String datenew = simpleDateFormat1.format(c.getTime());
-        return datenew;
-    }
-
-    private void submitAll() {
-
-        String mystring = "";
-        mystring += (JoH.tsl()/1000)+" watchkeypad ";
-        mystring += (getValue("time").length() > 0) ? getValue("time") + " time " : getTime() + " time ";
-        mystring += (getValue("bloodtest").length() > 0) ? getValue("bloodtest") + " blood " : "";
-        mystring += (getValue("carbs").length() > 0) ? (!getValue("carbs").equals("0") ? getValue("carbs") + " g carbs " : "") : "";
-        mystring += (getValue("insulin").length() > 0) ? (!getValue("insulin").equals("0") ? getValue("insulin") + " units " : "") : "";
-
-        if (mystring.length() > 1) {
-            ListenerService.sendTreatment(mystring);
-            //SendData(this, WEARABLE_VOICE_PAYLOAD, mystring.getBytes(StandardCharsets.UTF_8));
-            finish();
-        }
-    }
-
-
-    private void updateTab() {
-
-        final int offColor = Color.DKGRAY;
-        final int onColor = Color.RED;
-
-        insulintabbutton.setBackgroundColor(offColor);
-        carbstabbutton.setBackgroundColor(offColor);
-        timetabbutton.setBackgroundColor(offColor);
-        bloodtesttabbutton.setBackgroundColor(offColor);
-
-
-        String append = "";
-        String value = "";
-        switch (currenttab) {
-            case "insulin":
-                insulintabbutton.setBackgroundColor(onColor);
-                append = " units";
-                break;
-            case "carbs":
-                carbstabbutton.setBackgroundColor(onColor);
-                append = "g carbs";
-                break;
-            case "bloodtest":
-                bloodtesttabbutton.setBackgroundColor(onColor);
-                append = " BG";  // TODO get mgdl or mmol here
-                break;
-            case "time":
-                timetabbutton.setBackgroundColor(onColor);
-                append = " time";
-                break;
-        }
-        value = getValue(currenttab);
-        mDialTextView.setText(value + append);
-        // show green tick
-        if (value.length() > 0) {
-            mDialTextView.getBackground().setAlpha(255);
-        } else {
-            mDialTextView.getBackground().setAlpha(0);
-        }
-    }
-
-   /* private void sendMessage(final String message, final byte[] payload) {
-        Log.i(KeypadInputActivity.class.getSimpleName(), message);
-        Wearable.NodeApi.getConnectedNodes(mApiClient).setResultCallback(new ResultCallback<NodeApi.GetConnectedNodesResult>() {
-            @Override
-            public void onResult(NodeApi.GetConnectedNodesResult getConnectedNodesResult) {
-                List<Node> nodes = getConnectedNodesResult.getNodes();
-                for (Node node : nodes) {
-                    Log.i(KeypadInputActivity.class.getSimpleName(), "WEAR sending " + message + " to " + node);
-                    Wearable.MessageApi.sendMessage(mApiClient, node.getId(), message, payload).setResultCallback(new ResultCallback<MessageApi.SendMessageResult>() {
-                        @Override
-                        public void onResult(MessageApi.SendMessageResult sendMessageResult) {
-                            Log.i(KeypadInputActivity.class.getSimpleName(), "WEAR Result " + sendMessageResult.getStatus());
-                        }
-                    });
-                }
+    
+    private void setupKeypadButtons() {
+        // Set up number buttons 0-9
+        for (int i = 0; i <= 9; i++) {
+            final int digit = i;
+            int buttonId = getResources().getIdentifier("button_" + i, "id", getPackageName());
+            Button button = findViewById(buttonId);
+            if (button != null) {
+                button.setOnClickListener(v -> onDigitPressed(digit));
             }
-        });
-    }*/
-
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-      /*  mApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
-                    @Override
-                    public void onConnected(Bundle bundle) {
-
-                    }
-
-                    @Override
-                    public void onConnectionSuspended(int i) {
-
-                    }
-                })
-                .addOnConnectionFailedListener(new GoogleApiClient.OnConnectionFailedListener() {
-                    @Override
-                    public void onConnectionFailed(ConnectionResult result) {
-                        Log.i(KeypadInputActivity.class.getSimpleName(), "Connection failed");
-                    }
-                })
-                .addApi(Wearable.API)
-                .build();
-        mApiClient.connect();*/
+        }
+        
+        // Set up decimal button
+        Button decimalButton = findViewById(R.id.button_decimal);
+        if (decimalButton != null) {
+            decimalButton.setOnClickListener(v -> onDecimalPressed());
+        }
+        
+        // Set up delete button
+        Button deleteButton = findViewById(R.id.button_delete);
+        if (deleteButton != null) {
+            deleteButton.setOnClickListener(v -> onDeletePressed());
+        }
     }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
+    
+    private void setupActionButtons() {
+        // Set up cancel button
+        Button cancelButton = findViewById(R.id.button_cancel);
+        if (cancelButton != null) {
+            cancelButton.setOnClickListener(v -> onCancelPressed());
+        }
+        
+        // Set up done button
+        Button doneButton = findViewById(R.id.button_done);
+        if (doneButton != null) {
+            doneButton.setOnClickListener(v -> onDonePressed());
+        }
+    }
+    
+    private void onDigitPressed(int digit) {
+        // Add digit to input buffer
+        inputBuffer.append(digit);
+        updateValueDisplay();
+    }
+    
+    private void onDecimalPressed() {
+        // Add decimal point if not already present
+        if (!inputBuffer.toString().contains(".")) {
+            if (inputBuffer.length() == 0) {
+                inputBuffer.append("0");
+            }
+            inputBuffer.append(".");
+            updateValueDisplay();
+        }
+    }
+    
+    private void onDeletePressed() {
+        // Remove last character from input buffer
+        if (inputBuffer.length() > 0) {
+            inputBuffer.deleteCharAt(inputBuffer.length() - 1);
+            updateValueDisplay();
+        }
+    }
+    
+    private void onCancelPressed() {
+        // Cancel input and finish activity
+        setResult(RESULT_CANCELED);
         finish();
-        /*Wearable.MessageApi.removeListener(mApiClient, new MessageApi.MessageListener() {
-            @Override
-            public void onMessageReceived(MessageEvent messageEvent) {
-
+    }
+    
+    private void onDonePressed() {
+        // Validate input
+        if (inputBuffer.length() == 0) {
+            Toast.makeText(this, R.string.please_enter_value, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        // Parse value
+        double value;
+        try {
+            value = Double.parseDouble(inputBuffer.toString());
+        } catch (NumberFormatException e) {
+            Toast.makeText(this, R.string.invalid_value, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        // Validate value range
+        if (value <= 0) {
+            Toast.makeText(this, R.string.value_must_be_positive, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        // Store value for next time
+        lastValue = value;
+        
+        // Return value to caller
+        Intent resultIntent = new Intent();
+        resultIntent.putExtra("value", value);
+        resultIntent.putExtra("input_type", inputType);
+        setResult(RESULT_OK, resultIntent);
+        
+        // Process value based on input type
+        processValue(value);
+        
+        // Finish activity
+        finish();
+    }
+    
+    private void processValue(double value) {
+        // Process value based on input type
+        if (inputType == INPUT_TYPE_CALIBRATION) {
+            // Process calibration
+            // This would typically call a method to save the calibration
+            // and update the glucose values
+            Toast.makeText(this, getString(R.string.calibration_saved, value), Toast.LENGTH_SHORT).show();
+        } else if (inputType == INPUT_TYPE_TREATMENT) {
+            // Process treatment
+            // This would typically call a method to save the treatment
+            Toast.makeText(this, getString(R.string.treatment_saved, value), Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    private void updateValueDisplay() {
+        // Update value display
+        if (valueView != null) {
+            String displayText = inputBuffer.toString();
+            if (displayText.isEmpty()) {
+                displayText = "0";
             }
-        });
-        mApiClient.disconnect();*/
+            if (!units.isEmpty()) {
+                displayText += " " + units;
+            }
+            valueView.setText(displayText);
+        }
+    }
+    
+    /**
+     * Reset stored values
+     */
+    public static void resetValues() {
+        lastValue = 0;
+        lastInputType = INPUT_TYPE_CALIBRATION;
     }
 }

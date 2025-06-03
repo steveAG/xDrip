@@ -133,11 +133,6 @@ android {
         }
     }
 
-    lintOptions {
-        checkReleaseBuilds false
-        disable 'MissingTranslation'
-        disable 'ExtraTranslation'
-    }
 
     configurations {
         all {
@@ -145,27 +140,13 @@ android {
             exclude group: 'org.apache.httpcomponents'
         }
     }
-
-
     packagingOptions {
-        exclude 'META-INF/DEPENDENCIES'
-        exclude 'META-INF/INDEX.LIST'
-        exclude 'META-INF/NOTICE.md'
-        exclude 'META-INF/LICENSE.md'
-        exclude 'META-INF/LICENSE.txt'
-        exclude 'META-INF/LICENSE'
-        exclude 'META-INF/NOTICE.txt'
-        exclude 'META-INF/NOTICE'
-        exclude 'org/apache/http/version.properties'
-        exclude 'org/apache/http/client/version.properties'
-        //exclude 'META-INF/androidx.core_core.version'
-        exclude 'META-INF/com.android.tools/proguard/coroutines.pro'
-        exclude 'META-INF/ASL2.0'
-        exclude 'META-INF/androidx.interpolator_interpolator.version'
-        exclude 'META-INF/androidx.core_core.version'
-        pickFirst 'org/bouncycastle/x509/CertPathReviewerMessages.properties'
-        pickFirst 'org/bouncycastle/x509/CertPathReviewerMessages_de.properties'
+        resources {
+            excludes += ['META-INF/DEPENDENCIES', 'META-INF/INDEX.LIST', 'META-INF/NOTICE.md', 'META-INF/LICENSE.md', 'META-INF/LICENSE.txt', 'META-INF/LICENSE', 'META-INF/NOTICE.txt', 'META-INF/NOTICE', 'org/apache/http/version.properties', 'org/apache/http/client/version.properties', 'META-INF/com.android.tools/proguard/coroutines.pro', 'META-INF/ASL2.0', 'META-INF/androidx.interpolator_interpolator.version', 'META-INF/androidx.core_core.version']
+            pickFirsts += ['org/bouncycastle/x509/CertPathReviewerMessages.properties', 'org/bouncycastle/x509/CertPathReviewerMessages_de.properties']
+        }
     }
+
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -221,7 +202,7 @@ android {
             buildConfigField "int", "buildVersion", "2021010100"
             buildConfigField "String", "buildUUID", "\"0f79a60a-5616-99be-8eb1-a430edcfd9fd\""
             buildConfigField "long", "buildTimestamp", "1609459200L"
-            resConfigs "en", "xxhdpi"
+            resourceConfigurations += ['en', 'xxhdpi']
         }
 
         prod {
@@ -230,6 +211,11 @@ android {
             // the defaultConfig block instead. You still need to create this flavor.
             // Otherwise, all variants use the "dev" flavor configurations.
         }
+    }
+    namespace 'com.eveningoutpost.dexdrip'
+    lint {
+        checkReleaseBuilds false
+        disable 'MissingTranslation', 'ExtraTranslation'
     }
 
 }

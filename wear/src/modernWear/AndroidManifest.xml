@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Wear OS Tiles permission -->
+    <uses-permission android:name="com.google.android.wearable.permission.BIND_TILE_PROVIDER" />
+    <uses-feature android:name="android.hardware.type.watch" />
+    
+    <!-- Permission for exact alarms (required for Android 12+) -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
+    <application
+        android:name=".xdrip"
+        android:allowBackup="true"
+        android:icon="@drawable/ic_icon"
+        android:label="@string/app_name"
+        android:theme="@android:style/Theme.DeviceDefault"
+        tools:replace="android:allowBackup">
+        
+        <meta-data
+            android:name="com.google.android.wearable.standalone"
+            android:value="true" />
+            
+        <!-- Modern Keypad Input Activity -->
+        <activity
+            android:name=".modern.ModernKeypadInputActivity"
+            android:exported="true"
+            android:label="xDrip+ Modern"
+            android:theme="@style/AppTheme">
+            <!-- Removed launcher intent filter to prevent duplicate app icons -->
+        </activity>
+        
+        <!-- Watch Face Launcher Activity - No launcher intent filter to prevent app icon -->
+        <activity
+            android:name=".WatchFaceLauncherActivity"
+            android:exported="true"
+            android:label="xDrip+ Watch Faces"
+            android:theme="@android:style/Theme.DeviceDefault">
+            <!-- No intent filter to prevent app icon in launcher -->
+        </activity>
+
+        <!-- Watch Faces with enhanced configuration for modern Wear OS -->
+        <service
+            android:name=".Home"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="@string/label_xdrip"
+            android:icon="@drawable/watchface_graph"
+            android:description="@string/app_name"
+            android:permission="android.permission.BIND_WALLPAPER">
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/watchface_graph" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.wearableConfigurationAction"
+                android:value="androidx.wear.watchface.editor.action.WATCH_FACE_EDITOR" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.companionBuiltIn"
+                android:value="true" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.category"
+                android:value="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/watchface_graph" />
+            <meta-data
+                android:name="androidx.wear.watchface.WATCH_FACE_TYPE"
+                android:value="DIGITAL" />
+            <meta-data
+                android:name="android.service.wallpaper.watchface"
+                android:value="true" />
+            <!-- Additional metadata for Wear OS 5 compatibility -->
+            <meta-data
+                android:name="androidx.wear.watchface.WATCH_FACE_SYSTEM_VERSION"
+                android:value="2" />
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="androidx.wear.watchface.action.WATCHFACE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
+        
+        <service
+            android:name=".LargeHome"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="@string/label_xdrip_large"
+            android:icon="@drawable/watchface_dark"
+            android:description="@string/app_name"
+            android:permission="android.permission.BIND_WALLPAPER">
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/watchface_dark" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.wearableConfigurationAction"
+                android:value="androidx.wear.watchface.editor.action.WATCH_FACE_EDITOR" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.companionBuiltIn"
+                android:value="true" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.category"
+                android:value="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/watchface_dark" />
+            <meta-data
+                android:name="androidx.wear.watchface.WATCH_FACE_TYPE"
+                android:value="DIGITAL" />
+            <meta-data
+                android:name="android.service.wallpaper.watchface"
+                android:value="true" />
+            <!-- Additional metadata for Wear OS 5 compatibility -->
+            <meta-data
+                android:name="androidx.wear.watchface.WATCH_FACE_SYSTEM_VERSION"
+                android:value="2" />
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="androidx.wear.watchface.action.WATCHFACE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
+        
+        <service
+            android:name=".BIGChart"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="@string/label_xdrip_big_chart"
+            android:icon="@drawable/watchface_bigchart"
+            android:description="@string/app_name"
+            android:permission="android.permission.BIND_WALLPAPER">
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/watchface_bigchart" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.wearableConfigurationAction"
+                android:value="androidx.wear.watchface.editor.action.WATCH_FACE_EDITOR" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.companionBuiltIn"
+                android:value="true" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.category"
+                android:value="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/watchface_bigchart" />
+            <meta-data
+                android:name="androidx.wear.watchface.WATCH_FACE_TYPE"
+                android:value="DIGITAL" />
+            <meta-data
+                android:name="android.service.wallpaper.watchface"
+                android:value="true" />
+            <!-- Additional metadata for Wear OS 5 compatibility -->
+            <meta-data
+                android:name="androidx.wear.watchface.WATCH_FACE_SYSTEM_VERSION"
+                android:value="2" />
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="androidx.wear.watchface.action.WATCHFACE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
+        
+        <service
+            android:name=".CircleWatchface"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="@string/label_xdrip_circle"
+            android:icon="@drawable/watchface_circle"
+            android:description="@string/app_name"
+            android:permission="android.permission.BIND_WALLPAPER">
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/watchface_circle" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.wearableConfigurationAction"
+                android:value="androidx.wear.watchface.editor.action.WATCH_FACE_EDITOR" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.companionBuiltIn"
+                android:value="true" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.category"
+                android:value="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/watchface_circle" />
+            <meta-data
+                android:name="androidx.wear.watchface.WATCH_FACE_TYPE"
+                android:value="DIGITAL" />
+            <meta-data
+                android:name="android.service.wallpaper.watchface"
+                android:value="true" />
+            <!-- Additional metadata for Wear OS 5 compatibility -->
+            <meta-data
+                android:name="androidx.wear.watchface.WATCH_FACE_SYSTEM_VERSION"
+                android:value="2" />
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="androidx.wear.watchface.action.WATCHFACE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
+        
+        <!-- Simple Watch Face - Updated for modern Wear OS -->
+        <service
+            android:name=".SimpleWatchFace"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="xDrip+ Simple"
+            android:icon="@drawable/watchface_graph"
+            android:description="@string/app_name"
+            android:permission="android.permission.BIND_WALLPAPER">
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/watch_face" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview"
+                android:resource="@drawable/watchface_graph" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.wearableConfigurationAction"
+                android:value="androidx.wear.watchface.editor.action.WATCH_FACE_EDITOR" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.companionBuiltIn"
+                android:value="true" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.category"
+                android:value="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.preview_circular"
+                android:resource="@drawable/watchface_graph" />
+            <meta-data
+                android:name="androidx.wear.watchface.WATCH_FACE_TYPE"
+                android:value="DIGITAL" />
+            <meta-data
+                android:name="android.service.wallpaper.watchface"
+                android:value="true" />
+            <!-- Additional metadata for Wear OS 5 compatibility -->
+            <meta-data
+                android:name="androidx.wear.watchface.WATCH_FACE_SYSTEM_VERSION"
+                android:value="2" />
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+                <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="androidx.wear.watchface.action.WATCHFACE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
+        
+        <!-- Glucose Tile Service -->
+        <service
+            android:name="com.eveningoutpost.dexdrip.tiles.GlucoseTileService"
+            android:exported="true"
+            android:label="xDrip Glucose"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER"
+            android:icon="@drawable/ic_icon">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/tile_glucose_preview" />
+        </service>
+
+        <!-- Glucose Graph Tile Service -->
+        <service
+            android:name="com.eveningoutpost.dexdrip.tiles.GlucoseGraphTileService"
+            android:exported="true"
+            android:label="xDrip Glucose Graph"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER"
+            android:icon="@drawable/ic_icon">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/tile_glucose_graph_preview" />
+        </service>
+        
+        <!-- ListenerService for receiving data from phone -->
+        <service android:name=".ListenerService" android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.CAPABILITY_CHANGED" />
+                <data
+                    android:host="*"
+                    android:scheme="wear" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+                <data
+                    android:host="*"
+                    android:pathPrefix="/xdrip"
+                    android:scheme="wear" />
+                <data
+                    android:host="*"
+                    android:pathPrefix="/nightscout"
+                    android:scheme="wear" />
+                <data
+                    android:host="*"
+                    android:pathPrefix="/sendstatustowear"
+                    android:scheme="wear" />
+                <data
+                    android:host="*"
+                    android:pathPrefix="/openwearsettings"
+                    android:scheme="wear" />
+                <!-- Add specific path for BG data -->
+                <data
+                    android:host="*"
+                    android:path="/xdrip_plus_watch_bg_data"
+                    android:scheme="wear" />
+            </intent-filter>
+            <!-- Critical missing intent filter for MESSAGE_RECEIVED -->
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
+                <data
+                    android:host="*"
+                    android:pathPrefix="/xdrip"
+                    android:scheme="wear" />
+                <data
+                    android:host="*"
+                    android:pathPrefix="/nightscout"
+                    android:scheme="wear" />
+                <data
+                    android:host="*"
+                    android:pathPrefix="/sendstatustowear"
+                    android:scheme="wear" />
+                <data
+                    android:host="*"
+                    android:pathPrefix="/openwearsettings"
+                    android:scheme="wear" />
+                <!-- Add specific path for BG data -->
+                <data
+                    android:host="*"
+                    android:path="/xdrip_plus_watch_bg_data"
+                    android:scheme="wear" />
+            </intent-filter>
+        </service>
+        
+        <!-- ActiveAndroid ContentProvider -->
+        <provider
+            android:name="com.activeandroid.content.ContentProvider"
+            android:authorities="com.eveningoutpost.dexdrip"
+            android:exported="false" />
+    </application>
+
+</manifest>

@@ -1314,6 +1314,38 @@ public class DexCollectionService extends Service implements BtCallBack {
             }
         } else {
             UserError.Log.d(TAG, "Device is null in checkConnection");
+            
+            // Log additional information about the device
+            try {
+                ActiveBluetoothDevice activeDevice = ActiveBluetoothDevice.first();
+                if (activeDevice != null) {
+                    String deviceAddress = activeDevice.address;
+                    UserError.Log.d(TAG, "checkConnection: Active device address from database: " + deviceAddress);
+                    
+                    // Check if we can find the device in the Bluetooth adapter
+                    if (mBluetoothAdapter != null) {
+                        BluetoothDevice btDevice = mBluetoothAdapter.getRemoteDevice(deviceAddress);
+                        UserError.Log.d(TAG, "checkConnection: Found device in adapter: " +
+                              (btDevice != null ? btDevice.getName() + " (" + btDevice.getAddress() + ")" : "null"));
+                        
+                        // Check bond state
+                        if (btDevice != null) {
+                            int bondState = btDevice.getBondState();
+                            UserError.Log.d(TAG, "checkConnection: Device bond state: " +
+                                  (bondState == BluetoothDevice.BOND_NONE ? "BOND_NONE" :
+                                   bondState == BluetoothDevice.BOND_BONDING ? "BOND_BONDING" :
+                                   bondState == BluetoothDevice.BOND_BONDED ? "BOND_BONDED" : "UNKNOWN"));
+                        }
+                    } else {
+                        UserError.Log.d(TAG, "checkConnection: Bluetooth adapter is null");
+                    }
+                } else {
+                    UserError.Log.d(TAG, "checkConnection: No active device in database");
+                }
+            } catch (Exception e) {
+                UserError.Log.e(TAG, "checkConnection: Error checking device details: " + e);
+            }
+            
             mConnectionState = STATE_DISCONNECTED; // can't be connected if we don't know the device
         }
 

@@ -1,73 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- light colors -->
-    <color name="light_bigchart_time">@color/black</color>
-    <color name="light_bigchart_status">@color/black</color>
-    <color name="light_background">@color/white</color>
-    <color name="light_stripe_background">@color/black</color>
-    <color name="light_mTimestamp1">@color/black</color>
-    <color name="light_mTimestamp">@color/red_600</color>
-    <color name="light_highColor">@color/yellow_700</color>
-    <color name="light_lowColor">@color/red_600</color>
-    <color name="light_midColor">@color/black</color>
-    <color name="light_gridColor">@color/black</color>
-    <!-- dark colors -->
-    <color name="dark_mTime">@color/white</color>
-    <color name="dark_statusView">@color/white</color>
-    <color name="dark_background">@color/black</color>
-    <color name="dark_mLinearLayout">@color/grey_50</color>
-    <color name="dark_Timestamp">@color/white</color>
-    <color name="dark_mTimestamp1_home">@color/black</color>
-    <color name="dark_TimestampOld">@color/red_600</color>
-    <color name="dark_uploaderBattery">@color/black</color>
-    <color name="dark_uploaderBatteryEmpty">@color/red_600</color>
-    <color name="dark_mStatus_home">@color/black</color>
-
-    <color name="dark_highColor">@color/yellow_A200</color>
-    <color name="dark_lowColor">@color/RED</color>
-    <color name="dark_midColor">@color/grey_50</color>
-    <color name="dark_gridColor">@color/grey_50</color>
-
-    <!-- basal colors -->
-    <color name="basal_light">@color/blue_300</color>
-    <color name="basal_dark">@color/BLUE</color>
-    <color name="basal_light_lowres">@color/grey_300</color>
-    <color name="basal_dark_lowres">@color/grey_500</color>
-
-
-    <!-- Material Design - Color Palette -->
-    <!-- Red -->
-    <color name="red_600">#E53935</color>
-    <color name="RED">#FF0000</color>
-    <!-- Red -->
-
-    <!-- Blue -->
-    <color name="blue_300">#64B5F6</color>
-    <!-- Blue -->
-
-    <!-- Yellow -->
-    <color name="yellow_700">#FBC02D</color>
-    <color name="yellow_A200">#FFFF00</color>
-    <!-- Yellow -->
-
-    <!-- Grey -->
-    <color name="grey_50">#FAFAFA</color>
-    <color name="grey_300">#E0E0E0</color>
-    <color name="grey_500">#9E9E9E</color>
-    <!-- Grey -->
-
-    <!-- Blue Grey -->
-    <color name="BLUE">#0000FF</color>
-    <!-- Blue Grey -->
-
-    <!-- Black -->
-    <color name="black">#000000</color>
-    <!-- Black -->
-
-    <!-- White -->
+    <!-- Base colors -->
+    <color name="dark_background">#121212</color>
     <color name="white">#FFFFFF</color>
-    <!-- White -->
-
-    <color name="colorPrimaryDark">#303f9f</color>
-
+    <color name="black">#000000</color>
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+    
+    <!-- Keypad colors -->
+    <color name="keypad_button">#2D2D2D</color>
+    <color name="cancel_button">#B71C1C</color>
+    <color name="done_button">#1B5E20</color>
+    
+    <!-- Input type specific colors -->
+    <color name="calibration_background">#1A237E</color>
+    <color name="treatment_background">#004D40</color>
+    
+    <!-- Text colors -->
+    <color name="primary_text">#FFFFFF</color>
+    <color name="secondary_text">#B3FFFFFF</color>
+    <color name="error_text">#F44336</color>
+    
+    <!-- Glucose range colors -->
+    <color name="glucose_in_range">#4CAF50</color>
+    <color name="glucose_high">#FF9800</color>
+    <color name="glucose_very_high">#F44336</color>
+    <color name="glucose_low">#2196F3</color>
+    <color name="glucose_very_low">#9C27B0</color>
+    
+    <!-- Dark theme colors -->
+    <color name="dark_mTime">#AAAAAA</color>
+    <color name="dark_statusView">#AAAAAA</color>
+    <color name="dark_midColor">#AAAAAA</color>
+    <color name="dark_Timestamp">#AAAAAA</color>
+    <color name="dark_TimestampOld">#777777</color>
+    <color name="dark_highColor">#FF9800</color>
+    <color name="dark_lowColor">#2196F3</color>
+    <color name="dark_mTimestamp1_home">#AAAAAA</color>
+    <color name="dark_uploaderBattery">#AAAAAA</color>
+    <color name="dark_uploaderBatteryEmpty">#FF5555</color>
+    <color name="dark_mStatus_home">#AAAAAA</color>
+    <color name="dark_mLinearLayout">#121212</color>
+    
+    <!-- Light theme colors -->
+    <color name="light_background">#FFFFFF</color>
+    <color name="light_bigchart_time">#555555</color>
+    <color name="light_bigchart_status">#555555</color>
+    <color name="light_highColor">#FF9800</color>
+    <color name="light_midColor">#4CAF50</color>
+    <color name="light_lowColor">#2196F3</color>
+    <color name="light_mTimestamp">#555555</color>
+    <color name="light_mTimestamp1">#777777</color>
+    <color name="light_stripe_background">#F5F5F5</color>
 </resources>

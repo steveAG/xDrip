@@ -45,6 +45,7 @@ import com.eveningoutpost.dexdrip.services.SnoozeOnNotificationDismissService;
 import com.eveningoutpost.dexdrip.evaluators.PersistentHigh;
 import com.eveningoutpost.dexdrip.utils.PowerStateReceiver;
 import com.eveningoutpost.dexdrip.xdrip;
+import com.eveningoutpost.dexdrip.utilitymodels.NotificationChannels;
 
 import java.text.DecimalFormat;
 import java.util.Calendar;
@@ -712,7 +713,8 @@ public class Notifications extends IntentService {
     }
 
     private void calibrationNotificationCreate(String title, String content, Intent intent, int notificationId) {
-        NotificationCompat.Builder mBuilder = notificationBuilder(title, content, intent);
+        // Use CALIBRATION_REMINDERS_CHANNEL_ID for calibration notifications
+        NotificationCompat.Builder mBuilder = notificationBuilder(title, content, intent, NotificationChannels.CALIBRATION_REMINDERS_CHANNEL_ID);
         mBuilder.setVibrate(vibratePattern);
         mBuilder.setLights(0xff00ff00, 300, 1000);
         if(calibration_override_silent) {
@@ -726,8 +728,10 @@ public class Notifications extends IntentService {
         mNotifyMgr.notify(notificationId, mBuilder.build());
     }
 
-    private NotificationCompat.Builder notificationBuilder(String title, String content, Intent intent) {
-        return new NotificationCompat.Builder(mContext)
+    // Added channelId parameter
+    private NotificationCompat.Builder notificationBuilder(String title, String content, Intent intent, String channelId) {
+        // Use channelId when creating the builder
+        return new NotificationCompat.Builder(mContext, channelId)
                 .setSmallIcon(R.drawable.ic_action_communication_invert_colors_on)
                 .setContentTitle(title)
                 .setContentText(content)
@@ -870,8 +874,27 @@ public class Notifications extends IntentService {
             }
             Log.d(TAG,"OtherAlert forced_wear localOnly=" + localOnly);
             Intent intent = new Intent(context, Home.class);
+
+            // Determine appropriate channel ID based on notificationId
+            String channelId;
+            switch (notificatioId) {
+                case uncleanAlertNotificationId:
+                case missedAlertNotificationId:
+                case lowPredictAlertNotificationId:
+                case persistentHighAlertNotificationId:
+                    channelId = NotificationChannels.URGENT_ALERTS_CHANNEL_ID;
+                    break;
+                case riseAlertNotificationId:
+                case failAlertNotificationId:
+                    channelId = NotificationChannels.INFO_ALERTS_CHANNEL_ID;
+                    break;
+                default:
+                    channelId = NotificationChannels.MISC_CHANNEL_ID;
+                    break;
+            }
+
             NotificationCompat.Builder mBuilder =
-                    new NotificationCompat.Builder(context)
+                    new NotificationCompat.Builder(context, channelId) // Use determined channelId
                             .setSmallIcon(R.drawable.ic_launcher)//KS ic_action_communication_invert_colors_on
                             .setContentTitle(message)
                             .setContentText(message)

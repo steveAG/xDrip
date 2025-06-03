@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.wear.widget.BoxInsetLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/keypad_root_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/dark_background"
+    android:padding="@dimen/box_inset_layout_padding"
+    tools:context=".KeypadInputActivity"
+    tools:deviceIds="wear">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="@dimen/inner_frame_layout_padding"
+        app:layout_boxedEdges="all">
+
+        <!-- Title -->
+        <TextView
+            android:id="@+id/keypad_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/enter_value"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <!-- Value Display -->
+        <TextView
+            android:id="@+id/keypad_value"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:text="0"
+            android:textColor="@color/white"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <!-- Keypad Grid -->
+        <GridLayout
+            android:id="@+id/keypad_grid"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="8dp"
+            android:layout_weight="1"
+            android:columnCount="3"
+            android:rowCount="4">
+
+            <!-- Row 1: 1, 2, 3 -->
+            <Button
+                android:id="@+id/button_1"
+                style="@style/KeypadButton"
+                android:text="1" />
+
+            <Button
+                android:id="@+id/button_2"
+                style="@style/KeypadButton"
+                android:text="2" />
+
+            <Button
+                android:id="@+id/button_3"
+                style="@style/KeypadButton"
+                android:text="3" />
+
+            <!-- Row 2: 4, 5, 6 -->
+            <Button
+                android:id="@+id/button_4"
+                style="@style/KeypadButton"
+                android:text="4" />
+
+            <Button
+                android:id="@+id/button_5"
+                style="@style/KeypadButton"
+                android:text="5" />
+
+            <Button
+                android:id="@+id/button_6"
+                style="@style/KeypadButton"
+                android:text="6" />
+
+            <!-- Row 3: 7, 8, 9 -->
+            <Button
+                android:id="@+id/button_7"
+                style="@style/KeypadButton"
+                android:text="7" />
+
+            <Button
+                android:id="@+id/button_8"
+                style="@style/KeypadButton"
+                android:text="8" />
+
+            <Button
+                android:id="@+id/button_9"
+                style="@style/KeypadButton"
+                android:text="9" />
+
+            <!-- Row 4: ., 0, DEL -->
+            <Button
+                android:id="@+id/button_decimal"
+                style="@style/KeypadButton"
+                android:text="." />
+
+            <Button
+                android:id="@+id/button_0"
+                style="@style/KeypadButton"
+                android:text="0" />
+
+            <Button
+                android:id="@+id/button_delete"
+                style="@style/KeypadButton"
+                android:text="DEL" />
+
+        </GridLayout>
+
+        <!-- Action Buttons -->
+        <LinearLayout
+            android:id="@+id/action_buttons"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/button_cancel"
+                style="@style/ActionButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1"
+                android:background="@color/cancel_button"
+                android:text="@string/cancel" />
+
+            <Button
+                android:id="@+id/button_done"
+                style="@style/ActionButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_weight="1"
+                android:background="@color/done_button"
+                android:text="@string/done" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+</androidx.wear.widget.BoxInsetLayout>

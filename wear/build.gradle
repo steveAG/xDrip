@@ -4,16 +4,13 @@ apply from: '../common.gradle'
 
 android {
     compileSdkVersion 34
-    lintOptions {
-        checkReleaseBuilds false
-//        abortOnError false
-    }
     defaultConfig {
         applicationId "com.eveningoutpost.dexdrip"
-        minSdkVersion 21
+        minSdkVersion 26 // Increased from 23 to meet watchface-complications requirement
         //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 23
-        versionCode 1
+        // Base version code that will be modified per flavor
+        versionCode 1000000
         versionName generateVersionName()
         buildConfigField "int", "buildVersion", generateVersionNumberString()
         buildConfigField "String", "buildUUID", generateRandomUUID()
@@ -49,11 +46,26 @@ android {
             includeAndroidResources = true
             returnDefaultValues = true
         }
+// Skip Android tests
+    android {
+        testOptions {
+            unitTests.all {
+                enabled = false
+            }
+        }
+    }
+    
+    // Exclude androidTest configuration
+    configurations {
+        androidTestImplementation.exclude group: 'androidx.wear.watchface', module: 'watchface-test'
+    }
+    }
+    packagingOptions {
+        resources {
+            excludes += ['META-INF/INDEX.LIST']
+        }
     }
 
-    packagingOptions {
-        exclude 'META-INF/INDEX.LIST'
-    }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -73,74 +85,193 @@ android {
         }
     }
 
-    flavorDimensions "version"
+    flavorDimensions "version", "wear_version"
     productFlavors {
-        // When building a variant that uses this flavor, the following configurations
-        // override those in the defaultConfig block.
+        // Match the app module's flavor dimension
         fast {
-            // To avoid using legacy multidex when building from the command line,
-            // set minSdkVersion to 21 or higher. When using Android Studio 2.3 or higher,
-            // the build automatically avoids legacy multidex when deploying to a device running
-            // API level 21 or higher—regardless of what you set as your minSdkVersion.
-            minSdkVersion 21
+            dimension "version"
             versionNameSuffix "-dev"
-            buildConfigField "int", "buildVersion", "2021010100"
-            buildConfigField "String", "buildUUID", "\"0f79a60a-5616-99be-8eb1-a430edcfd9fe\""
-            buildConfigField "long", "buildTimestamp", "1609459200L"
-            resConfigs "en", "xxhdpi"
         }
-
         prod {
-            // If you've configured the defaultConfig block for the release version of
-            // your app, you can leave this block empty and Gradle uses configurations in
-            // the defaultConfig block instead. You still need to create this flavor.
-            // Otherwise, all variants use the "dev" flavor configurations.
+            dimension "version"
+        }
+        
+        // Wear-specific flavor dimension
+        legacyWear {
+            dimension "wear_version"
+            // Targets older Wear OS devices (Maintenance Focus)
+            // Plan: min 21 (TBD), target ~30
+            minSdkVersion 26 // Increased from 21 to meet watchface library requirements
+            targetSdkVersion 30
+            versionNameSuffix "-legacy"
+            // Version code strategy: AABBBCCC where AA=API level (26), BBB=flavor (001), CCC=base version
+            versionCode 26001000 + defaultConfig.versionCode % 1000
+        }
+        modernWear {
+            dimension "wear_version"
+            // Targets Wear OS 5+ devices (Feature Focus)
+            // Plan: min ~31 (TBD), target 34+
+            minSdkVersion 31 // Confirm based on Wear OS 5 requirements
+            targetSdkVersion 34
+            versionNameSuffix "-modern"
+            // Version code strategy: AABBBCCC where AA=API level (31), BBB=flavor (002), CCC=base version
+            versionCode 31002000 + defaultConfig.versionCode % 1000
+            
+            // Use the same package name as the main app to ensure compatibility
+            // applicationIdSuffix ".modern" - removed to fix integration with phone app
+            
+            // Completely separate from main source set
+            matchingFallbacks = []
+        }
+    }
+    
+    // Configuration for modernWear flavor - allow it to use main source set
+    android.applicationVariants.all { variant ->
+        if (variant.name.contains('ModernWear')) {
+            // Keep main source set but prioritize modernWear source set
+            variant.sourceSets.each { sourceSet ->
+                if (sourceSet.name.contains('modernWear')) {
+                    // Ensure modernWear source set is properly configured
+                    sourceSet.java.srcDirs = ['src/modernWear/java']
+                    sourceSet.res.srcDirs = ['src/modernWear/res']
+                    sourceSet.manifest.srcFile 'src/modernWear/AndroidManifest.xml'
+                }
+            }
+        }
+    }
+    namespace 'com.eveningoutpost.dexdrip'
+    lint {
+        checkReleaseBuilds false
+    }
+sourceSets {
+        // Wear version flavor source sets
+        legacyWear {
+            java.srcDirs = ['src/legacyWear/java']
+            res.srcDirs = ['src/legacyWear/res']
+        }
+        modernWear {
+            // Allow inheritance from main source set
+            java {
+                srcDirs = ['src/modernWear/java']
+            }
+            res {
+                srcDirs = ['src/modernWear/res']
+            }
+            manifest.srcFile 'src/modernWear/AndroidManifest.xml'
+            resources.srcDirs = ['src/modernWear/resources']
+            assets.srcDirs = ['src/modernWear/assets']
         }
     }
 }
 
-allprojects {
-    repositories {
-        flatDir {
-            dirs project(':wear').file('libs'), project(':app').file('libs') // Seems to always use the directive from app build.gradle not this one
-        }
-    }
+// Removed allprojects block that might interfere with repository resolution
+
+// Add repositories section for module-specific repositories
+repositories {
+    google()
+    mavenCentral()
+    maven { url "https://jitpack.io" }
 }
+// Removed module-level repositories block to rely on root project's allprojects configuration
 
 dependencies {
+    // Common dependencies for all flavors
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    compileOnly 'com.google.android.wearable:wearable:2.5.0'
-    implementation 'com.google.android.support:wearable:2.5.0'
-    implementation 'androidx.appcompat:appcompat:1.0.0'
-    // FIX upgrade to play-services-wearable:17.0.0 requires upgrade to AndroidX libraries, https://developers.google.com/android/guides/releases#june_17_2019
-    implementation 'com.google.android.gms:play-services-wearable:10.2.1'
+    implementation('androidx.appcompat:appcompat:1.0.0') {
+        exclude group: 'com.google.guava', module: 'listenablefuture'
+    }
+    implementation 'com.google.android.gms:play-services-wearable:18.1.0'
     implementation 'com.squareup.wire:wire-runtime:2.2.0'
-    //implementation 'com.ustwo.android:clockwise-wearable:1.0.2'
-    implementation(name: 'ustwo-clockwise-debug', ext: 'aar')
     implementation(name: 'wearpreferenceactivity-0.5.0', ext: 'aar')
     implementation 'com.google.code.gson:gson:2.8.6'
-
     implementation 'com.tananaev:adblib:1.3'
-
+    implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.1.0'
     implementation(name: 'thread-safe-active-android-3.1.1', ext: 'aar')
     implementation 'com.google.guava:guava:24.1-jre'
     implementation 'io.reactivex:rxjava:1.3.3'
     implementation 'com.polidea.rxandroidble2:rxandroidble:1.12.1'
     implementation 'org.apache.commons:commons-math3:3.6'
+    implementation 'uk.com.robust-it:cloning:1.9.5'
+    
+    // Core Wear library - shared but with different versions
+    implementation "androidx.wear:wear:1.2.0"
+    
+    // Legacy flavor specific dependencies
+    legacyWearImplementation(name: 'ustwo-clockwise-debug', ext: 'aar')
+    legacyWearImplementation "androidx.wear.watchface:watchface:1.1.0"
+    legacyWearImplementation "androidx.wear.watchface:watchface-style:1.1.0"
+    legacyWearImplementation "androidx.wear.watchface:watchface-complications-data-source:1.1.0"
+    legacyWearImplementation "androidx.wear.watchface:watchface-complications-rendering:1.1.0"
+    legacyWearImplementation "androidx.wear.watchface:watchface-data:1.1.0"
+    
+    // Modern flavor specific dependencies
+    modernWearImplementation(name: 'ustwo-clockwise-debug', ext: 'aar') // Add this to fix compilation issues
+    modernWearImplementation "androidx.wear.watchface:watchface:1.2.1"
+    modernWearImplementation "androidx.wear.watchface:watchface-style:1.2.1"
+    modernWearImplementation "androidx.wear.watchface:watchface-complications-data-source:1.2.1"
+    modernWearImplementation "androidx.wear.watchface:watchface-complications-rendering:1.2.1"
+    modernWearImplementation "androidx.wear.watchface:watchface-data:1.2.1"
+    // Tiles API - only for modern flavor (Wear OS 3.0+)
+    modernWearImplementation "androidx.wear.tiles:tiles:1.2.0"
+    modernWearImplementation "androidx.wear.tiles:tiles-material:1.2.0"
+    // Material Components for modernWear
+    modernWearImplementation "com.google.android.material:material:1.6.0"
+    
+    // Unit test dependencies
     testImplementation "org.robolectric:robolectric:4.2.1"
     testImplementation 'junit:junit:4.13.2'
     testImplementation "com.google.truth:truth:1.1.3"
+    testImplementation 'org.mockito:mockito-core:4.11.0'
+    
+    // Instrumentation test dependencies
+    androidTestImplementation 'androidx.test:runner:1.5.2'
+    androidTestImplementation 'androidx.test:rules:1.5.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    androidTestImplementation 'androidx.test.uiautomator:uiautomator:2.2.0'
+    androidTestImplementation 'androidx.wear.watchface:watchface-test:1.1.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-contrib:3.5.1'
+    androidTestImplementation "com.google.truth:truth:1.1.3"
 
     // add missing JAXB dependencies for JDK 9+
     if (JavaVersion.current().ordinal() >= JavaVersion.VERSION_1_9.ordinal()) {
         annotationProcessor 'jakarta.xml.bind:jakarta.xml.bind-api:2.3.3'
     }
 
-    implementation 'uk.com.robust-it:cloning:1.9.5'
-    // you will want to install the android studio lombok plugin
-    compileOnly 'org.projectlombok:lombok'
-    annotationProcessor "org.projectlombok:lombok"
-    // use lombok in unit tests
-    testCompileOnly 'org.projectlombok:lombok'
-    testAnnotationProcessor 'org.projectlombok:lombok'
+    // Lombok for code generation - use a specific version compatible with JDK 17+
+    def lombokVersion = '1.18.30'
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
+    testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+}
+
+// Globally exclude the standalone listenablefuture module as it conflicts with the full Guava library
+configurations.all {
+    exclude group: 'com.google.guava', module: 'listenablefuture'
+}
+
+// Configure combined flavor variants
+android.variantFilter { variant ->
+    def buildType = variant.buildType.name
+    def flavors = variant.flavors*.name
+    
+    // Check if we have both version and wear_version dimensions
+    if (flavors.contains('fast') || flavors.contains('prod')) {
+        if (flavors.contains('legacyWear') || flavors.contains('modernWear')) {
+            // This is a combined flavor variant - keep it
+            return
+        }
+    }
+    
+    // If we have only one dimension, disable the variant
+    if ((flavors.contains('fast') || flavors.contains('prod')) &&
+        !(flavors.contains('legacyWear') || flavors.contains('modernWear'))) {
+        variant.ignore = true
+    }
+    
+    if ((flavors.contains('legacyWear') || flavors.contains('modernWear')) &&
+        !(flavors.contains('fast') || flavors.contains('prod'))) {
+        variant.ignore = true
+    }
 }

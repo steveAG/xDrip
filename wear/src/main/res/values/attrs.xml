@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Attributes for WatchViewStub -->
+    <declare-styleable name="WatchViewStub">
+        <attr name="rectLayout" format="reference" />
+        <attr name="roundLayout" format="reference" />
+    </declare-styleable>
+
+    <!-- Attributes for BoxInsetLayout (layout_box used with value 'all') -->
+    <attr name="layout_box">
+        <flag name="left" value="0x01" />
+        <flag name="top" value="0x02" />
+        <flag name="right" value="0x04" />
+        <flag name="bottom" value="0x08" />
+        <flag name="all" value="0x0F" />
+    </attr>
+
+    <!-- Attributes for legacy CircledImageView -->
+    <attr name="circle_radius" format="dimension" />
+    <attr name="circle_color" format="color" />
+    <attr name="circle_border_width" format="dimension" />
+    <attr name="circle_border_color" format="color" />
+    
+    <!-- Attributes for androidx.wear.widget.CircledImageView -->
+    <attr name="circleRadius" format="dimension" />
+    <attr name="circleColor" format="color" />
+    <attr name="circleBorderWidth" format="dimension" />
+    <attr name="circleBorderColor" format="color" />
+
+</resources>

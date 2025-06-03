@@ -2,9 +2,11 @@ package com.eveningoutpost.dexdrip.utilitymodels;
 
 //KS import android.app.AlarmManager;
 //KS import android.app.PendingIntent;
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 
@@ -20,6 +22,7 @@ import com.eveningoutpost.dexdrip.services.G5CollectionService;
 //KS import com.eveningoutpost.dexdrip.UtilityModels.pebble.PebbleWatchSync;
 import com.eveningoutpost.dexdrip.services.Ob1G5CollectionService;
 import com.eveningoutpost.dexdrip.utils.DexCollectionType;
+import com.eveningoutpost.dexdrip.utils.PermissionManager;
 //KS import com.eveningoutpost.dexdrip.wearintegration.WatchUpdaterService;
 import com.eveningoutpost.dexdrip.xdrip;
 
@@ -139,6 +142,36 @@ public class CollectionServiceStarter {
     }
 
     public static void newStart(Context context) {
+        // Check permissions before starting collection service
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            // For Bluetooth-based collectors, check permissions
+            if (DexCollectionType.hasBluetooth()) {
+                boolean hasPermissions = true;
+                
+                // Check Bluetooth permissions
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    // Android 12+ (API 31+) uses new Bluetooth permissions
+                    hasPermissions = PermissionManager.hasPermission(context, Manifest.permission.BLUETOOTH_SCAN) &&
+                                    PermissionManager.hasPermission(context, Manifest.permission.BLUETOOTH_CONNECT);
+                } else {
+                    // Older versions use BLUETOOTH and BLUETOOTH_ADMIN
+                    hasPermissions = PermissionManager.hasPermission(context, Manifest.permission.BLUETOOTH) &&
+                                    PermissionManager.hasPermission(context, Manifest.permission.BLUETOOTH_ADMIN);
+                    
+                    // For API 23-30, location permission is also required for Bluetooth scanning
+                    hasPermissions = hasPermissions &&
+                                    PermissionManager.hasPermission(context, Manifest.permission.ACCESS_FINE_LOCATION);
+                }
+                
+                if (!hasPermissions) {
+                    Log.e(TAG, "Cannot start collection service - missing required permissions");
+                    // Set flag to trigger permission check in xdrip.java
+                    Pref.setBoolean("needs_permission_check", true);
+                    return;
+                }
+            }
+        }
+        
         CollectionServiceStarter collectionServiceStarter = new CollectionServiceStarter(context);
         collectionServiceStarter.start(context);
     }

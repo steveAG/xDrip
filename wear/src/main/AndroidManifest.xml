@@ -1,41 +1,88 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.eveningoutpost.dexdrip">
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Explicitly set minSdkVersion to 26 -->
+    <uses-sdk android:minSdkVersion="26" tools:overrideLibrary="androidx.wear,androidx.wear.watchface.complications,androidx.wear.watchface.style,androidx.wear.watchface.data,androidx.wear.watchface.complications.data"/>
 
     <uses-feature android:name="android.hardware.type.watch" />
 
+    <!-- Basic permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.NFC" />
     <uses-permission android:name="com.google.android.permission.PROVIDE_BACKGROUND" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.BLUETOOTH_PRIVILEGED" />
-    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS_FULL" />
-    <uses-permission android:name="android.permission.INSTALL_PACKAGES" />
-    <uses-permission android:name="android.permission.DELETE_PACKAGES" />
-    <uses-permission android:name="android.permission.CHANGE_COMPONENT_ENABLED_STATE" />
-    <uses-permission android:name="android.permission.MANAGE_DEVICE_ADMINS" />
-    <uses-permission
-        android:name="android.permission.DEVICE_POWER"
-        tools:ignore="ProtectedPermissions" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-    <!-- Declaration that this app is usable on phones with Bluetooth Low Energy. -->
-    <uses-feature
-        android:name="android.hardware.bluetooth_le"
-        android:required="false" />
-
-    <uses-permission-sdk-23 android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-    <uses-permission-sdk-23 android:name="android.permission.ACCESS_FINE_LOCATION" />
-
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
-    <uses-permission android:name="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER" />
-    <uses-permission android:name="android.permission.BODY_SENSORS" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER" />
+    <!-- Permission for exact alarms (required for Android 12+) -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    
+    <!-- Storage permissions - handled differently in API 29+ -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+                     android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+                     android:maxSdkVersion="32" />
+    
+    <!-- Bluetooth permissions for API < 31 -->
+    <uses-permission android:name="android.permission.BLUETOOTH"
+                     android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"
+                     android:maxSdkVersion="30" />
+    
+    <!-- Bluetooth permissions for API 31+ (Android 12+) -->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+                     android:usesPermissionFlags="neverForLocation"
+                     tools:targetApi="s" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    
+    <!-- Location permissions -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- Background location for API 29+ -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    
+    <!-- Body sensors permissions -->
+    <uses-permission android:name="android.permission.BODY_SENSORS" />
+    <!-- Background body sensors for API 34+ -->
+    <uses-permission android:name="android.permission.BODY_SENSORS_BACKGROUND"
+                     tools:targetApi="upside_down_cake" />
+    
+    <!-- Activity recognition -->
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    
+    <!-- Notification permission for API 33+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"
+                     tools:targetApi="tiramisu" />
+    
+    <!-- Foreground service permission for API 28+ -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    
+    <!-- Battery optimization -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    
+    <!-- System permissions that require special handling -->
+    <uses-permission android:name="android.permission.BLUETOOTH_PRIVILEGED"
+                     tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS_FULL"
+                     tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.INSTALL_PACKAGES"
+                     tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.DELETE_PACKAGES"
+                     tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.CHANGE_COMPONENT_ENABLED_STATE"
+                     tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.MANAGE_DEVICE_ADMINS"
+                     tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.DEVICE_POWER"
+                     tools:ignore="ProtectedPermissions" />
+    
+    <!-- Feature declarations -->
+    <uses-feature
+        android:name="android.hardware.bluetooth_le"
+        android:required="false" />
 
     <application
         android:name=".xdrip"
@@ -68,6 +115,7 @@
         <service
             android:name=".Home"
             android:allowEmbedded="true"
+            android:exported="true"
             android:label="@string/label_xdrip"
             android:permission="android.permission.BIND_WALLPAPER">
             <meta-data
@@ -86,6 +134,7 @@
         <service
             android:name=".LargeHome"
             android:allowEmbedded="true"
+            android:exported="true"
             android:label="@string/label_xdrip_large"
             android:permission="android.permission.BIND_WALLPAPER">
             <meta-data
@@ -104,6 +153,7 @@
         <service
             android:name=".BIGChart"
             android:allowEmbedded="true"
+            android:exported="true"
             android:label="@string/label_xdrip_big_chart"
             android:permission="android.permission.BIND_WALLPAPER">
             <meta-data
@@ -112,16 +162,39 @@
             <meta-data
                 android:name="com.google.android.wearable.watchface.preview"
                 android:resource="@drawable/watchface_bigchart" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.wearableConfigurationAction"
+                android:value="androidx.wear.watchface.editor.action.WATCH_FACE_EDITOR" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.companionBuiltIn"
+                android:value="true" />
+            <meta-data
+                android:name="com.google.android.wearable.watchface.category"
+                android:value="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            <meta-data
+                android:name="androidx.wear.watchface.WATCH_FACE_TYPE"
+                android:value="DIGITAL" />
+            <meta-data
+                android:name="android.service.wallpaper.watchface"
+                android:value="true" />
+            <!-- Additional metadata for Wear OS 5 compatibility -->
+            <meta-data
+                android:name="androidx.wear.watchface.WATCH_FACE_SYSTEM_VERSION"
+                android:value="2" />
 
             <intent-filter>
                 <action android:name="android.service.wallpaper.WallpaperService" />
-
                 <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="androidx.wear.watchface.action.WATCHFACE" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </service>
         <service
             android:name=".CircleWatchface"
             android:allowEmbedded="true"
+            android:exported="true"
             android:label="@string/label_xdrip_circle"
             android:permission="android.permission.BIND_WALLPAPER">
             <meta-data
@@ -137,7 +210,7 @@
                 <category android:name="com.google.android.wearable.watchface.category.WATCH_FACE" />
             </intent-filter>
         </service>
-        <service android:name=".ListenerService">
+        <service android:name=".ListenerService" android:exported="true">
             <intent-filter>
                 <action android:name="com.google.android.gms.wearable.CAPABILITY_CHANGED" />
 
@@ -177,18 +250,22 @@
         <service
             android:name=".services.G5CollectionService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="true"
+            android:foregroundServiceType="connectedDevice|dataSync" />
         <service
             android:name=".services.Ob1G5CollectionService"
-            android:enabled="true" />
+            android:enabled="true"
+            android:foregroundServiceType="connectedDevice|dataSync" />
         <service
             android:name=".services.DexCollectionService"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="true"
+            android:foregroundServiceType="connectedDevice|dataSync" />
         <service
             android:name=".services.DexShareCollectionService"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="true"
+            android:foregroundServiceType="connectedDevice|dataSync" />
         <service
             android:name=".utilitymodels.Notifications"
             android:exported="false" />
@@ -198,21 +275,23 @@
         <service
             android:name=".services.MissedReadingService"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="true"
+            android:foregroundServiceType="dataSync" />
         <service
             android:name=".services.CustomComplicationProviderService"
+            android:exported="true"
             android:icon="@drawable/ic_watch_white"
             android:label="xDrip Complication Provider"
             android:permission="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER">
             <intent-filter>
-                <action android:name="android.support.wearable.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />
+                <action android:name="androidx.wear.watchface.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />
             </intent-filter>
 
             <meta-data
-                android:name="android.support.wearable.complications.SUPPORTED_TYPES"
+                android:name="androidx.wear.watchface.complications.SUPPORTED_TYPES"
                 android:value="SHORT_TEXT,LONG_TEXT" />
             <meta-data
-                android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
+                android:name="androidx.wear.watchface.complications.UPDATE_PERIOD_SECONDS"
                 android:value="60" />
         </service>
         <service android:name=".services.HeartRateService" />
@@ -223,14 +302,14 @@
             android:name=".ProcessAPKChannelDownload"
             android:permission="android.permission.BIND_JOB_SERVICE" />
 
-        <receiver android:name=".NSEmulatorReceiver">
+        <receiver android:name=".NSEmulatorReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="com.eveningoutpost.dexdrip.NS_EMULATOR" />
                 <action android:name="com.eveningoutpost.dexdrip.OOP2_DECODE_FARM_RESULT" />
             </intent-filter>
         </receiver>
         <receiver android:name=".services.ComplicationTapBroadcastReceiver" />
-        <receiver android:name=".utils.DisconnectReceiver">
+        <receiver android:name=".utils.DisconnectReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
             </intent-filter>
@@ -243,12 +322,12 @@
 
         <activity
             android:name=".NWPreferences"
+            android:exported="true"
             android:icon="@drawable/ic_icon"
             android:label="@string/app_name"
             android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -260,39 +339,24 @@
             android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
-
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="com.google.android.voicesearch.SELF_NOTE" />
-
                 <data android:mimeType="text/plain" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
             android:name=".KeypadInputActivity"
+            android:exported="true"
             android:icon="@drawable/ic_icon"
             android:label="Keypad Treatment"
             android:launchMode="singleTask">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
         <activity
             android:name=".QuickSnooze"
+            android:exported="true"
             android:icon="@drawable/ic_icon"
             android:label="@string/snooze_alert"
             android:launchMode="singleTask">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
         <activity
             android:name=".LocationPermissionActivity"
@@ -331,7 +395,18 @@
             android:name=".tables.TreatmentsTable"
             android:configChanges="orientation|screenSize"
             android:label="@string/bg_readings_table" />
-        <activity android:name=".SensorPermissionActivity" />
+        <activity
+            android:name=".SensorPermissionActivity"
+            android:theme="@style/Theme.AppCompat" />
+        <activity
+            android:name=".BluetoothPermissionActivity"
+            android:theme="@style/Theme.AppCompat" />
+        <activity
+            android:name=".NotificationPermissionActivity"
+            android:theme="@style/Theme.AppCompat" />
+        <activity
+            android:name=".ExactAlarmPermissionActivity"
+            android:theme="@style/Theme.AppCompat" />
 
         <receiver
 
